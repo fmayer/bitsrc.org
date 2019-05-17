@@ -1,0 +1,46 @@
+<!doctype html>
+
+<html>
+	<head>
+		<title>Game of Life</title>
+		<meta name = "viewport" content = "width = 330">
+		<script data-main="main" src="utils/require.js"></script>
+		<link href='http://fonts.googleapis.com/css?family=Merriweather' rel='stylesheet' type='text/css'> 
+		<link rel="stylesheet" href="screen.css" type="text/css" id="css" />
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-60512974-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+	</head>
+	<body>
+		<div class="content">
+			<h1>Game of Life</h1>
+			<a href="#" id="mobile" class="csschange" ref="mobile.css">Change to mobile view</a>
+			<a href="#" id="screen" class="csschange" ref="screen.css">Change to normal view</a>
+			<h2>The Game</h2>
+		<div class="center">
+			<canvas id="gol" height="300" width="300">
+				This website is too fancy for your browser. I am sorry.
+			</canvas><br/>
+			<input type="button" id="clear" value="Clear"/>
+			<input type="button" id="toggle" value="Play"/>
+			<input id="freq" value="2 Hz" size="5"/>
+			<br/>
+			<a href="#" id="perma">Permalink</a>
+			<input id="permap"/>
+		</div>
+		<h2>About</h2>
+		<p>
+			This is an implementation of <a href="http://en.wikipedia.org/wiki/Conway's_Game_of_Life">Conway's Game of Life</a> utilizing HTML5 canvas and Coffeescript. Written by Florian Mayer
+			&lt;<a href="mailto:florian.mayer@bitsrc.org">florian.mayer@bitsrc.org</a>&gt;.
+			Source available at <a href="https://github.com/segfaulthunter/life">GitHub</a>. You seem interested in moving plots, maybe you'll like <a href="http://pso.bitsrc.org">my PSO visualization</a>.
+		</p>
+		</div>
+	</body>
+</html>

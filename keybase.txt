@@ -1,0 +1,72 @@
+==================================================================
+https://keybase.io/segfaulthunter
+--------------------------------------------------------------------
+
+I hereby claim:
+
+  * I am an admin of http://bitsrc.org
+  * I am segfaulthunter (https://keybase.io/segfaulthunter) on keybase.
+  * I have a public key with fingerprint 718A C057 CD9D 2A25 DF8A  1242 E382 DD8D 04F4 9981
+
+To claim this, I am signing this object:
+
+{
+    "body": {
+        "key": {
+            "fingerprint": "718ac057cd9d2a25df8a1242e382dd8d04f49981",
+            "host": "keybase.io",
+            "key_id": "e382dd8d04f49981",
+            "uid": "980306be7d66cd333fb96dba462c6700",
+            "username": "segfaulthunter"
+        },
+        "service": {
+            "hostname": "bitsrc.org",
+            "protocol": "http:"
+        },
+        "type": "web_service_binding",
+        "version": 1
+    },
+    "ctime": 1399676374,
+    "expire_in": 157680000,
+    "prev": "7a7d5c778ed3b267099a074240201002d4adddd7e0198e0ffc37e94002455f2a",
+    "seqno": 6,
+    "tag": "signature"
+}
+
+with the aforementioned key, yielding the PGP signature:
+
+-----BEGIN PGP MESSAGE-----
+Version: Keybase OpenPGP v0.1.14
+Comment: https://keybase.io/crypto
+
+yMMDAnicbZF9UBR1GMfv5EI4aVJCUHEc3JpmpBP2dvf25Qwcc0YnHWCIyBCZY3d/
+v102uN1jb+8AGWSUSBMUcEKn6Q/Blxg1bCaiA2sMHEQJjIyIEmziykyNIYYDeZFw
+j7H/ev75zX6fz/d52afr+RCD2fj7obvHTIGPDhp7O6Y8hgxnzk+lCKeAEsReiuTD
+pUeQZBGqLlWSNcSOUFaa5VEbxQMGYCxmAwLNWjECgziNAUADlBAIhqGtiAXJU9xB
+h16GY90wQVJ0Tf9wSEBX/4f3LCUYGsVRkoMUIEke4DgucAwJOJYgMZ6kUDQIuqEq
+s06o024oCqynQMvzyBpUkTKLrqheiddzpUsDPOM4SXOrfIKiirrfpSqawisFup6n
+aS570KaVuIJcEeQczyo4OEkG+u66wQtVt6TIiN2qk7wmBUtacYYhKRKnCAsCi12S
+Ch1SkLBRJI3qEWwDvcE/xlLAxlMUDQHOYfoKDMOiFIERKIZaURQDBAv0oCBqZWiI
+CgKPU5Ah9AxhswkYq/d3w0JZQeykPiYrBreWRJnVPCpEyq517jMZjGZD6HPLgtcz
+mMNX/nfTusMvLIKLH074b/jCwh0rci+VxXwhbUkMuze8DvZeVS4KntCjsY2BKzez
+JrPbz+00B8TL/idxHdsLf446YAsxju3+Z0PEVuOZXUmt51daFxqcQz6pbW9Ef/Wu
+hfYK53DPq6PLp33d7hPRXOYdKvYUA27jHycZTj8urBsD4YEZ+e/MeKTi9fUp4wVV
+8Sccy8WS2WWhNesWW5KL/W89EL+bzP2t+8Hb9db8A/3T3VpLdvkne0ZOPlxzs6V6
+NWla1ZSzaep+RldPVeLhR+eS2saJgdWdSanvv5w+HD0YHjE5zYUfyzK1/ameSnI3
+zu14sntP3fn9/hd9a/u9luSOgvn3dnREV0Q2XU8XFn4tvtZzJObOxG3npso4Z8bx
+qsoV6o17I2tPOt6c75cHQti+YxlMQf5faUOB3Hf9jy+v2ZDcnDY4hRtGYssWB6pv
+JWa/9ofJufkHuHdjnWjKtLQcT2geK20N+6U+xSW6GjvR+8NVF2pavw5Ni1Jnvkmd
+Gf18n1i0NZDStT7igwtFd7+91XDl6qPNpk9/FLCElyaa+uJHJmvO9G0b/WomMsd7
+dvrQqm1mxTfU+9l47Gx7zEHz9Ve286f3A/tcTmm7ParwDf+lqsXydHsZbXS9Qy4+
+nN/YUMun5/LNcd/3xVb2RrZ+mZpxJL8wy+lbqN85N1hb21L+b22CO/Ws96hnlknb
+8hQ6dp1a
+=bMJ0
+-----END PGP MESSAGE-----
+
+And finally, I am proving ownership of this host by posting or
+appending to this document.
+
+View my publicly-auditable identity here: https://keybase.io/segfaulthunter
+
+==================================================================
+

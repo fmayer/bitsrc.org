@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Fun with Operator Overloading</title>
+  <meta name="description" content="The other day I was asked to take a look at code I had written years ago that basicallyallowed the user to build up logical formulas while always keeping the...">
+
+  <link rel="stylesheet" href="http://bitsrc.org/blog/css/main.css">
+  <link rel="canonical" href="http:/bitsrc.orghttp://bitsrc.org/blog/python/2016/10/14/operator-overloading.html">
+  <link rel="alternate" type="application/rss+xml" title="Strings over Σ" href="http:/bitsrc.orghttp://bitsrc.org/blog/feed.xml" />
+<script type="text/javascript"
+    src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    showProcessingMessages: false,
+    messageStyle: 'none',
+    // show equation numbers
+    TeX: {
+      equationNumbers: {
+        autoNumber: "AMS"
+      }
+    },
+    'HTML-CSS': {
+      imageFont: null
+    }
+  });
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-60512974-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="http://bitsrc.org/blog/">Strings over Σ</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="http://bitsrc.org/blog/about/">About</a>
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">Fun with Operator Overloading</h1>
+    <p class="post-meta">Oct 14, 2016</p>
+  </header>
+
+  <article class="post-content">
+    <p>The other day I was asked to take a look at code I had written years ago that basically
+allowed the user to build up logical formulas while always keeping them in CNF (conjunctive
+normal form – that is, a logical formula where the outermost connective is always a conjunction).</p>
+
+<p>This was done by building a class hierarchy with an abstract class <code class="highlighter-rouge">Expr</code> on the top level,
+two classes <code class="highlighter-rouge">ExprAnd</code> and <code class="highlighter-rouge">ExprOr</code> that represent conjunction and disjunction respectively and
+both contain lists of <code class="highlighter-rouge">Expr</code>. Various other classes where used to represent various atoms of
+the formulas, the particular code was about solar physics so the atoms happen to be things like
+<code class="highlighter-rouge">Wavelength(x, y)</code> for selecting observations of a particular wavelength.</p>
+
+<p>The base class <code class="highlighter-rouge">Expr</code> defines <code class="highlighter-rouge">__and__</code> and <code class="highlighter-rouge">__or__</code>, that is the methods that need to be
+implemented to overload the <code class="highlighter-rouge">&amp;</code> and <code class="highlighter-rouge">|</code> operations that just return <code class="highlighter-rouge">ExprAnd</code> and <code class="highlighter-rouge">ExprOr</code>
+of the object and the left hand operand.</p>
+
+<p><code class="highlighter-rouge">ExprAnd</code> and <code class="highlighter-rouge">ExprOr</code> also implement the operation corresponding to their node type
+by just returning a new <code class="highlighter-rouge">ExprAnd</code> or <code class="highlighter-rouge">ExprOr</code> with the left hand operand added to the
+list, respectively. They also implement <code class="highlighter-rouge">__rand__</code> and <code class="highlighter-rouge">__ror__</code>, so their special implementation
+is also applied if they are used at the right hand side of the operation – or that was the plan.
+<code class="highlighter-rouge">ExprAnd</code> commutes <code class="highlighter-rouge">|</code> operations into the conjuction to keep conjunction as the top level
+connective.</p>
+
+<p>The problem that I asked to help with was that <code class="highlighter-rouge">foo &amp; (bar &amp; baz)</code> did not seem to evaluate into
+<code class="highlighter-rouge">ExprAnd(foo, bar, baz)</code>, but rather <code class="highlighter-rouge">ExprAnd(foo, ExprAnd(bar, baz))</code>, that is, the automatic
+transformation to CNF was not working.</p>
+
+<p>Python actually implements logic that when you have an operation <code class="highlighter-rouge">foo &amp; bar</code> where the type of
+<code class="highlighter-rouge">bar</code> is a subclass of the type of <code class="highlighter-rouge">foo</code> and implements its own version of <code class="highlighter-rouge">__rand__</code>, the
+expression will be evaluating using that. So when you read <code class="highlighter-rouge">__rand__</code> (or any of the operators)
+is used of the left hand side does not implement the operator, that is wrong. For instance,</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="n">In</span> <span class="p">[</span><span class="mi">18</span><span class="p">]:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span><span class="p">:</span>     <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="o">...</span><span class="p">:</span>         <span class="k">print</span> <span class="s">"Foo "</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">x</span>
+    <span class="o">...</span><span class="p">:</span>         
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">19</span><span class="p">]:</span> <span class="k">class</span> <span class="nc">Qux</span><span class="p">(</span><span class="n">Foo</span><span class="p">):</span>
+    <span class="o">...</span><span class="p">:</span>     <span class="k">def</span> <span class="nf">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="o">...</span><span class="p">:</span>         <span class="k">print</span> <span class="s">"Qux "</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">x</span>
+    <span class="o">...</span><span class="p">:</span>         
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">20</span><span class="p">]:</span> <span class="n">Foo</span><span class="p">()</span> <span class="o">+</span> <span class="n">Qux</span><span class="p">()</span>
+<span class="n">Qux</span>  <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Qux</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f9f750</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Foo</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f7e510</span><span class="o">&gt;</span></code></pre></figure>
+
+<p>This behaviour was what I was aiming to exploit by making <code class="highlighter-rouge">ExprAnd</code> (for instance) implement
+both <code class="highlighter-rouge">__and__</code> and <code class="highlighter-rouge">__rand__</code> and make Python use the most specific implementation. Sadly, it
+does not work this way. If you now introduce a third class that inherits from Foo and does not
+implement either of the methods itself, the base class’ will be used, for instance</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="n">In</span> <span class="p">[</span><span class="mi">21</span><span class="p">]:</span> <span class="k">class</span> <span class="nc">Bar</span><span class="p">(</span><span class="n">Foo</span><span class="p">):</span>
+    <span class="o">...</span><span class="p">:</span>     <span class="k">pass</span>
+    <span class="o">...</span><span class="p">:</span> 
+<span class="n">In</span> <span class="p">[</span><span class="mi">22</span><span class="p">]:</span> <span class="n">Bar</span><span class="p">()</span> <span class="o">+</span> <span class="n">Qux</span><span class="p">()</span>
+<span class="n">Foo</span>  <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Bar</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f80890</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Qux</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f93a90</span><span class="o">&gt;</span></code></pre></figure>
+
+<p>The semantics of Python operator overloading will <em>only</em> prefer the <code class="highlighter-rouge">__rand__</code> method of the
+right hand side if it is an object of a subclass of the <em>type of the right hand side object</em>.
+Note that this does not take into account in which class the implementation of the left hand side
+was actually done, which explains the behaviour above.</p>
+
+<p>If you look at the class layout described above, this was exactly the case that I was hitting.
+Disclaimer: What follows below is not how it was actually fixed in the code.</p>
+
+<h1 id="going-crazy">Going Crazy</h1>
+<p>I realized that what I had intended to implement back then was something like commutative
+<a href="http://clojure.org/reference/multimethods">multimethod</a>. Python’s dynamicity, for better or
+worse, gives you the tools to do most of such things, so I decided to give it a go.</p>
+
+<p>The gist of the idea is to try to find the most specific implementation of the operation,
+considering both operands. The operation of the left hand side operand is more specific if it overrides the definition of the operation on the right hand side (and the other way
+round).</p>
+
+<p>This can conveniently be expressed in terms of Python: The operation of the left hand side
+operand is more specific if the operation defined by the right hand side is in the MRO (method
+resolution order – the list of classes, in order, that get consulted when looking up a method
+in an object).</p>
+
+<p>To implement this, first we define a functions to get all functions. It is important to know
+that the function is different to the unbound and bound method object and does not contain
+information about which class it is contained in; the function object can be obtained from
+an unbound method object by using <code class="highlighter-rouge">im_func</code>.</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="kn">import</span> <span class="nn">inspect</span>
+
+<span class="k">def</span> <span class="nf">fn_mro</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
+    <span class="n">mro</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmro</span><span class="p">(</span><span class="n">cls</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">im_func</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">mro</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fn</span><span class="p">)]</span></code></pre></figure>
+
+<p>This can then be used to implement the logic as described above as a decorator that wraps
+a method. Note that we have to compare whether the left and right side operator is actually the
+same to prevent an infinite loop.</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">most_specific</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">__name__</span>
+        <span class="n">self_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">im_func</span>
+        <span class="n">other_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">im_func</span>
+        <span class="k">if</span> <span class="n">self_fn</span> <span class="o">==</span> <span class="n">other_fn</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">self_fn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fn_mro</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+            <span class="c"># We did not inherit this from something in other's MRO.</span>
+            <span class="k">if</span> <span class="n">other_fn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fn_mro</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+                <span class="c"># They didn't either. PANIC!</span>
+                <span class="k">raise</span> <span class="nb">TypeError</span>
+            <span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">name</span><span class="p">)(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">func</span></code></pre></figure>
+
+<p>If we use the decorator on a slightly modified version of the previous example
+(we use <code class="highlighter-rouge">__add__</code> instead of <code class="highlighter-rouge">__radd__</code> because the decorator assumes commutativity
+and uses the same operations on both sides).</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="n">In</span> <span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="nd">@most_specific</span>
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s">"Foo "</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">x</span>
+   <span class="o">...</span><span class="p">:</span>         
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="k">class</span> <span class="nc">Qux</span><span class="p">(</span><span class="n">Foo</span><span class="p">):</span>
+    <span class="nd">@most_specific</span>
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s">"Qux "</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">x</span>
+   <span class="o">...</span><span class="p">:</span>         
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">9</span><span class="p">]:</span> <span class="n">Foo</span><span class="p">()</span> <span class="o">+</span> <span class="n">Qux</span><span class="p">()</span>
+<span class="n">Qux</span>  <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Qux</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x103103690</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Foo</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x103103f50</span><span class="o">&gt;</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">10</span><span class="p">]:</span> <span class="k">class</span> <span class="nc">Bar</span><span class="p">(</span><span class="n">Foo</span><span class="p">):</span>
+   <span class="o">....</span><span class="p">:</span>     <span class="k">pass</span>
+   <span class="o">....</span><span class="p">:</span> 
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">11</span><span class="p">]:</span> <span class="n">Bar</span><span class="p">()</span> <span class="o">+</span> <span class="n">Qux</span><span class="p">()</span>
+<span class="n">Qux</span>  <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Qux</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x103103e50</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Bar</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x10310b050</span><span class="o">&gt;</span></code></pre></figure>
+
+
+  </article>
+
+</div>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Strings over Σ</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col  footer-col-1">
+        <ul class="contact-list">
+          <li>Strings over Σ</li>
+          <li><a href="mailto:blog@bitsrc.org">blog@bitsrc.org</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/segfaulthunter">
+              <span class="icon  icon--github">
+                <svg viewBox="0 0 16 16">
+                  <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
+                </svg>
+              </span>
+
+              <span class="username">segfaulthunter</span>
+            </a>
+          </li>
+          
+
+          
+          <li>
+            <a href="https://twitter.com/segfaulthunter">
+              <span class="icon  icon--twitter">
+                <svg viewBox="0 0 16 16">
+                  <path fill="#828282" d="M15.969,3.058c-0.586,0.26-1.217,0.436-1.878,0.515c0.675-0.405,1.194-1.045,1.438-1.809
+                  c-0.632,0.375-1.332,0.647-2.076,0.793c-0.596-0.636-1.446-1.033-2.387-1.033c-1.806,0-3.27,1.464-3.27,3.27 c0,0.256,0.029,0.506,0.085,0.745C5.163,5.404,2.753,4.102,1.14,2.124C0.859,2.607,0.698,3.168,0.698,3.767 c0,1.134,0.577,2.135,1.455,2.722C1.616,6.472,1.112,6.325,0.671,6.08c0,0.014,0,0.027,0,0.041c0,1.584,1.127,2.906,2.623,3.206 C3.02,9.402,2.731,9.442,2.433,9.442c-0.211,0-0.416-0.021-0.615-0.059c0.416,1.299,1.624,2.245,3.055,2.271 c-1.119,0.877-2.529,1.4-4.061,1.4c-0.264,0-0.524-0.015-0.78-0.046c1.447,0.928,3.166,1.469,5.013,1.469 c6.015,0,9.304-4.983,9.304-9.304c0-0.142-0.003-0.283-0.009-0.423C14.976,4.29,15.531,3.714,15.969,3.058z"/>
+                </svg>
+              </span>
+
+              <span class="username">segfaulthunter</span>
+            </a>
+          </li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-3">
+        <p class="text">A blog about computer science, logic and programming. Occasionally other topics reasonably consistent with the rest.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
