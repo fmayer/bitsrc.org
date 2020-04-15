@@ -189,10 +189,10 @@ same to prevent an infinite loop.</p>
         <span class="k">if</span> <span class="n">self_fn</span> <span class="o">==</span> <span class="n">other_fn</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">self_fn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fn_mro</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-            <span class="c"># We did not inherit this from something in other's MRO.</span>
-            <span class="k">if</span> <span class="n">other_fn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fn_mro</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-                <span class="c"># They didn't either. PANIC!</span>
-                <span class="k">raise</span> <span class="nb">TypeError</span>
+            <span class="c1"># We did not inherit this from something in other's MRO.
+</span>            <span class="k">if</span> <span class="n">other_fn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fn_mro</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+                <span class="c1"># They didn't either. PANIC!
+</span>                <span class="k">raise</span> <span class="nb">TypeError</span>
             <span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">name</span><span class="p">)(</span><span class="bp">self</span><span class="p">)</span>
@@ -203,13 +203,13 @@ same to prevent an infinite loop.</p>
 and uses the same operations on both sides).</p>
 
 <figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="n">In</span> <span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="nd">@most_specific</span>
+    <span class="o">@</span><span class="n">most_specific</span>
     <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">print</span> <span class="s">"Foo "</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">x</span>
    <span class="o">...</span><span class="p">:</span>         
 
 <span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="k">class</span> <span class="nc">Qux</span><span class="p">(</span><span class="n">Foo</span><span class="p">):</span>
-    <span class="nd">@most_specific</span>
+    <span class="o">@</span><span class="n">most_specific</span>
     <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">print</span> <span class="s">"Qux "</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">x</span>
    <span class="o">...</span><span class="p">:</span>         

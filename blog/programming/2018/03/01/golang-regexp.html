@@ -100,16 +100,16 @@
 
 <p>For sake of simplicity, let’s explore a constructed example first in this post: does a regexp match strings of arbitrary length? Or, in more technical terms: is there a loop in the finite state machine? Let’s get right started with the boilerplate of compiling a regular expression into something called a <code class="highlighter-rouge">Prog</code>.</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="n">r</span><span class="p">,</span><span class="x"> </span><span class="n">err</span><span class="x"> </span><span class="o">:=</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">Parse</span><span class="p">(</span><span class="s">`.*`</span><span class="p">,</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">Perl</span><span class="p">)</span><span class="x">
-</span><span class="k">if</span><span class="x"> </span><span class="n">err</span><span class="x"> </span><span class="o">!=</span><span class="x"> </span><span class="no">nil</span><span class="x"> </span><span class="p">{</span><span class="x">
-	</span><span class="nb">panic</span><span class="p">(</span><span class="n">fmt</span><span class="o">.</span><span class="n">Sprintf</span><span class="p">(</span><span class="s">"Parse: %v"</span><span class="p">,</span><span class="x"> </span><span class="n">err</span><span class="p">))</span><span class="x">
-</span><span class="p">}</span><span class="x">
+<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="n">r</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">syntax</span><span class="o">.</span><span class="n">Parse</span><span class="p">(</span><span class="s">`.*`</span><span class="p">,</span> <span class="n">syntax</span><span class="o">.</span><span class="n">Perl</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+	<span class="nb">panic</span><span class="p">(</span><span class="n">fmt</span><span class="o">.</span><span class="n">Sprintf</span><span class="p">(</span><span class="s">"Parse: %v"</span><span class="p">,</span> <span class="n">err</span><span class="p">))</span>
+<span class="p">}</span>
 
-</span><span class="n">p</span><span class="p">,</span><span class="x"> </span><span class="n">err</span><span class="x"> </span><span class="o">:=</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">Compile</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">Simplify</span><span class="p">())</span><span class="x">
-</span><span class="k">if</span><span class="x"> </span><span class="n">err</span><span class="x"> </span><span class="o">!=</span><span class="x"> </span><span class="no">nil</span><span class="x"> </span><span class="p">{</span><span class="x">
-	</span><span class="nb">panic</span><span class="p">(</span><span class="n">fmt</span><span class="o">.</span><span class="n">Sprintf</span><span class="p">(</span><span class="s">"Compile: %v"</span><span class="p">,</span><span class="x"> </span><span class="n">err</span><span class="p">))</span><span class="x">
-</span><span class="p">}</span><span class="x">
-</span><span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="n">p</span><span class="p">)</span></code></pre></figure>
+<span class="n">p</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">syntax</span><span class="o">.</span><span class="n">Compile</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">Simplify</span><span class="p">())</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+	<span class="nb">panic</span><span class="p">(</span><span class="n">fmt</span><span class="o">.</span><span class="n">Sprintf</span><span class="p">(</span><span class="s">"Compile: %v"</span><span class="p">,</span> <span class="n">err</span><span class="p">))</span>
+<span class="p">}</span>
+<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="n">p</span><span class="p">)</span></code></pre></figure>
 
 <p>This actually produces a nice and readable representation of the generated finite state machine. Note the * next to 2 which tells us that this is the initial state.</p>
 
@@ -145,34 +145,34 @@
 
 <p>This information allows us to implement a helper function to determining the successor instructions, given an instruction.</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span><span class="x"> </span><span class="n">GetSuccessors</span><span class="p">(</span><span class="n">i</span><span class="x"> </span><span class="o">*</span><span class="n">syntax</span><span class="o">.</span><span class="n">Inst</span><span class="p">)</span><span class="x"> </span><span class="p">[]</span><span class="kt">uint32</span><span class="x"> </span><span class="p">{</span><span class="x">
-	</span><span class="k">if</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Op</span><span class="x"> </span><span class="o">==</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstMatch</span><span class="x"> </span><span class="o">||</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Op</span><span class="x"> </span><span class="o">==</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstFail</span><span class="x"> </span><span class="p">{</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="p">[]</span><span class="kt">uint32</span><span class="p">{}</span><span class="x">
-	</span><span class="p">}</span><span class="x">
-	</span><span class="n">o</span><span class="x"> </span><span class="o">:=</span><span class="x"> </span><span class="p">[]</span><span class="kt">uint32</span><span class="p">{</span><span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">}</span><span class="x">
-	</span><span class="k">if</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Op</span><span class="x"> </span><span class="o">==</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstAlt</span><span class="x"> </span><span class="o">||</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Op</span><span class="x"> </span><span class="o">==</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstAltMatch</span><span class="x"> </span><span class="p">{</span><span class="x">
-		</span><span class="n">o</span><span class="x"> </span><span class="o">=</span><span class="x"> </span><span class="nb">append</span><span class="p">(</span><span class="n">o</span><span class="p">,</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Arg</span><span class="p">)</span><span class="x">
-	</span><span class="p">}</span><span class="x">
-	</span><span class="k">return</span><span class="x"> </span><span class="n">o</span><span class="x">
-</span><span class="p">}</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span> <span class="n">GetSuccessors</span><span class="p">(</span><span class="n">i</span> <span class="o">*</span><span class="n">syntax</span><span class="o">.</span><span class="n">Inst</span><span class="p">)</span> <span class="p">[]</span><span class="kt">uint32</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">Op</span> <span class="o">==</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstMatch</span> <span class="o">||</span> <span class="n">i</span><span class="o">.</span><span class="n">Op</span> <span class="o">==</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstFail</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="p">[]</span><span class="kt">uint32</span><span class="p">{}</span>
+	<span class="p">}</span>
+	<span class="n">o</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">uint32</span><span class="p">{</span><span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">}</span>
+	<span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">Op</span> <span class="o">==</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstAlt</span> <span class="o">||</span> <span class="n">i</span><span class="o">.</span><span class="n">Op</span> <span class="o">==</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstAltMatch</span> <span class="p">{</span>
+		<span class="n">o</span> <span class="o">=</span> <span class="nb">append</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Arg</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="n">o</span>
+<span class="p">}</span></code></pre></figure>
 
 <p>Now we can implement loop-detection by a simple breadth-first search, keeping track of already visited nodes in a set (i.e. a <code class="highlighter-rouge">map[uint32]bool</code>, because Golang does not have a set type).</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span><span class="x"> </span><span class="n">HasLoop</span><span class="p">(</span><span class="n">p</span><span class="x"> </span><span class="o">*</span><span class="n">syntax</span><span class="o">.</span><span class="n">Prog</span><span class="p">)</span><span class="x"> </span><span class="kt">bool</span><span class="x"> </span><span class="p">{</span><span class="x">
-	</span><span class="k">var</span><span class="x"> </span><span class="n">tovisit</span><span class="x"> </span><span class="p">[]</span><span class="kt">uint32</span><span class="x">
-	</span><span class="n">tovisit</span><span class="x"> </span><span class="o">=</span><span class="x"> </span><span class="nb">append</span><span class="p">(</span><span class="n">tovisit</span><span class="p">,</span><span class="x"> </span><span class="kt">uint32</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">Start</span><span class="p">))</span><span class="x">
-	</span><span class="n">seen</span><span class="x"> </span><span class="o">:=</span><span class="x"> </span><span class="nb">make</span><span class="p">(</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="p">)</span><span class="x">
-	</span><span class="k">for</span><span class="x"> </span><span class="nb">len</span><span class="p">(</span><span class="n">tovisit</span><span class="p">)</span><span class="x"> </span><span class="o">!=</span><span class="x"> </span><span class="m">0</span><span class="x"> </span><span class="p">{</span><span class="x">
-		</span><span class="n">i</span><span class="x"> </span><span class="o">:=</span><span class="x"> </span><span class="n">tovisit</span><span class="p">[</span><span class="m">0</span><span class="p">]</span><span class="x">
-		</span><span class="k">if</span><span class="x"> </span><span class="n">seen</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="x"> </span><span class="p">{</span><span class="x">
-			</span><span class="k">return</span><span class="x"> </span><span class="no">true</span><span class="x">
-		</span><span class="p">}</span><span class="x">
-		</span><span class="n">seen</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="x"> </span><span class="o">=</span><span class="x"> </span><span class="no">true</span><span class="x">
-		</span><span class="n">tovisit</span><span class="x"> </span><span class="o">=</span><span class="x"> </span><span class="n">tovisit</span><span class="p">[</span><span class="m">1</span><span class="o">:</span><span class="p">]</span><span class="x">
-		</span><span class="n">tovisit</span><span class="x"> </span><span class="o">=</span><span class="x"> </span><span class="nb">append</span><span class="p">(</span><span class="n">tovisit</span><span class="p">,</span><span class="x"> </span><span class="n">GetSuccessors</span><span class="p">(</span><span class="o">&amp;</span><span class="n">p</span><span class="o">.</span><span class="n">Inst</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">...</span><span class="p">)</span><span class="x">
-	</span><span class="p">}</span><span class="x">
-	</span><span class="k">return</span><span class="x"> </span><span class="no">false</span><span class="x">
-</span><span class="p">}</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span> <span class="n">HasLoop</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span><span class="n">syntax</span><span class="o">.</span><span class="n">Prog</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="k">var</span> <span class="n">tovisit</span> <span class="p">[]</span><span class="kt">uint32</span>
+	<span class="n">tovisit</span> <span class="o">=</span> <span class="nb">append</span><span class="p">(</span><span class="n">tovisit</span><span class="p">,</span> <span class="kt">uint32</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">Start</span><span class="p">))</span>
+	<span class="n">seen</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nb">len</span><span class="p">(</span><span class="n">tovisit</span><span class="p">)</span> <span class="o">!=</span> <span class="m">0</span> <span class="p">{</span>
+		<span class="n">i</span> <span class="o">:=</span> <span class="n">tovisit</span><span class="p">[</span><span class="m">0</span><span class="p">]</span>
+		<span class="k">if</span> <span class="n">seen</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="no">true</span>
+		<span class="p">}</span>
+		<span class="n">seen</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="no">true</span>
+		<span class="n">tovisit</span> <span class="o">=</span> <span class="n">tovisit</span><span class="p">[</span><span class="m">1</span><span class="o">:</span><span class="p">]</span>
+		<span class="n">tovisit</span> <span class="o">=</span> <span class="nb">append</span><span class="p">(</span><span class="n">tovisit</span><span class="p">,</span> <span class="n">GetSuccessors</span><span class="p">(</span><span class="o">&amp;</span><span class="n">p</span><span class="o">.</span><span class="n">Inst</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">...</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="no">false</span>
+<span class="p">}</span></code></pre></figure>
 
 <h1 id="a-regex-engine">A regex engine</h1>
 
@@ -196,82 +196,82 @@
 
 <p>Of course, the easiest way to do this is a recursive evaluator. We pass in a program, the current instruction, and input, and the current position in the input.</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span><span class="x"> </span><span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="x"> </span><span class="o">*</span><span class="n">syntax</span><span class="o">.</span><span class="n">Prog</span><span class="p">,</span><span class="x"> </span><span class="n">pc</span><span class="x"> </span><span class="kt">uint32</span><span class="p">,</span><span class="x"> </span><span class="n">input</span><span class="x"> </span><span class="p">[]</span><span class="kt">rune</span><span class="p">,</span><span class="x"> </span><span class="n">idx</span><span class="x"> </span><span class="kt">int</span><span class="p">)</span><span class="x"> </span><span class="kt">bool</span><span class="x"> </span><span class="p">{</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span> <span class="n">Match</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span><span class="n">syntax</span><span class="o">.</span><span class="n">Prog</span><span class="p">,</span> <span class="n">pc</span> <span class="kt">uint32</span><span class="p">,</span> <span class="n">input</span> <span class="p">[]</span><span class="kt">rune</span><span class="p">,</span> <span class="n">idx</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span></code></pre></figure>
 
 <p>Let’s first determine the previous and current rune at the current position, and use <code class="highlighter-rouge">-1</code> for the borders of the string (to be consistent with <code class="highlighter-rouge">MatchEmptyWidth</code>).</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="x">	</span><span class="k">var</span><span class="x"> </span><span class="n">prev</span><span class="x"> </span><span class="kt">rune</span><span class="x"> </span><span class="o">=</span><span class="x"> </span><span class="o">-</span><span class="m">1</span><span class="x">
-	</span><span class="k">if</span><span class="x"> </span><span class="n">idx</span><span class="x"> </span><span class="o">&gt;</span><span class="x"> </span><span class="m">0</span><span class="x"> </span><span class="o">&amp;&amp;</span><span class="x"> </span><span class="n">idx</span><span class="x"> </span><span class="o">&lt;=</span><span class="x"> </span><span class="nb">len</span><span class="p">(</span><span class="n">input</span><span class="p">)</span><span class="x"> </span><span class="p">{</span><span class="x">
-		</span><span class="n">prev</span><span class="x"> </span><span class="o">=</span><span class="x"> </span><span class="n">input</span><span class="p">[</span><span class="n">idx</span><span class="o">-</span><span class="m">1</span><span class="p">]</span><span class="x">
-	</span><span class="p">}</span><span class="x">
-	</span><span class="k">var</span><span class="x"> </span><span class="n">cur</span><span class="x"> </span><span class="kt">rune</span><span class="x"> </span><span class="o">=</span><span class="x"> </span><span class="o">-</span><span class="m">1</span><span class="x">
-	</span><span class="k">if</span><span class="x"> </span><span class="n">idx</span><span class="x"> </span><span class="o">&lt;</span><span class="x"> </span><span class="nb">len</span><span class="p">(</span><span class="n">input</span><span class="p">)</span><span class="x"> </span><span class="p">{</span><span class="x">
-		</span><span class="n">cur</span><span class="x"> </span><span class="o">=</span><span class="x"> </span><span class="n">input</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="x">
-	</span><span class="p">}</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">var</span> <span class="n">prev</span> <span class="kt">rune</span> <span class="o">=</span> <span class="o">-</span><span class="m">1</span>
+	<span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="m">0</span> <span class="o">&amp;&amp;</span> <span class="n">idx</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">input</span><span class="p">)</span> <span class="p">{</span>
+		<span class="n">prev</span> <span class="o">=</span> <span class="n">input</span><span class="p">[</span><span class="n">idx</span><span class="o">-</span><span class="m">1</span><span class="p">]</span>
+	<span class="p">}</span>
+	<span class="k">var</span> <span class="n">cur</span> <span class="kt">rune</span> <span class="o">=</span> <span class="o">-</span><span class="m">1</span>
+	<span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">input</span><span class="p">)</span> <span class="p">{</span>
+		<span class="n">cur</span> <span class="o">=</span> <span class="n">input</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+	<span class="p">}</span></code></pre></figure>
 
 <p>And now all that’s left is one fairly large switch (if you look at actual implementations of regex engines, there are also often giant switches, so it’s legit).</p>
 
 <p><code class="highlighter-rouge">InstAlt</code> and <code class="highlighter-rouge">InstAltMatch</code> are the same, so let’s use the <code class="highlighter-rouge">fallthrough</code> statement for go switch statements (this is much more sane than C-style fallthrough by default).</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="x">	</span><span class="n">i</span><span class="x"> </span><span class="o">:=</span><span class="x"> </span><span class="n">p</span><span class="o">.</span><span class="n">Inst</span><span class="p">[</span><span class="n">pc</span><span class="p">]</span><span class="x">
-	</span><span class="k">switch</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Op</span><span class="x"> </span><span class="p">{</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstAlt</span><span class="o">:</span><span class="x">
-		</span><span class="k">fallthrough</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstAltMatch</span><span class="o">:</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span><span class="x"> </span><span class="n">input</span><span class="p">,</span><span class="x"> </span><span class="n">idx</span><span class="p">)</span><span class="x"> </span><span class="o">||</span><span class="x"> </span><span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Arg</span><span class="p">,</span><span class="x"> </span><span class="n">input</span><span class="p">,</span><span class="x"> </span><span class="n">idx</span><span class="p">)</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="n">i</span> <span class="o">:=</span> <span class="n">p</span><span class="o">.</span><span class="n">Inst</span><span class="p">[</span><span class="n">pc</span><span class="p">]</span>
+	<span class="k">switch</span> <span class="n">i</span><span class="o">.</span><span class="n">Op</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstAlt</span><span class="o">:</span>
+		<span class="k">fallthrough</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstAltMatch</span><span class="o">:</span>
+		<span class="k">return</span> <span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span> <span class="o">||</span> <span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Arg</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></code></pre></figure>
 
 <p>We don’t care about <code class="highlighter-rouge">InstCapture</code> or <code class="highlighter-rouge">InstNop</code> here.</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="x">	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstNop</span><span class="o">:</span><span class="x">
-		</span><span class="k">fallthrough</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstCapture</span><span class="o">:</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span><span class="x"> </span><span class="n">input</span><span class="p">,</span><span class="x"> </span><span class="n">idx</span><span class="p">)</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstNop</span><span class="o">:</span>
+		<span class="k">fallthrough</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstCapture</span><span class="o">:</span>
+		<span class="k">return</span> <span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></code></pre></figure>
 
 <p>For <code class="highlighter-rouge">InstEmptyWidth</code> we use the method that was given to us for this.</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="x">	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstEmptyWidth</span><span class="o">:</span><span class="x">
-		</span><span class="k">if</span><span class="x"> </span><span class="o">!</span><span class="n">i</span><span class="o">.</span><span class="n">MatchEmptyWidth</span><span class="p">(</span><span class="n">prev</span><span class="p">,</span><span class="x"> </span><span class="n">cur</span><span class="p">)</span><span class="x"> </span><span class="p">{</span><span class="x">
-			</span><span class="k">return</span><span class="x"> </span><span class="no">false</span><span class="x">
-		</span><span class="p">}</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span><span class="x"> </span><span class="n">input</span><span class="p">,</span><span class="x"> </span><span class="n">idx</span><span class="p">)</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstEmptyWidth</span><span class="o">:</span>
+		<span class="k">if</span> <span class="o">!</span><span class="n">i</span><span class="o">.</span><span class="n">MatchEmptyWidth</span><span class="p">(</span><span class="n">prev</span><span class="p">,</span> <span class="n">cur</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="no">false</span>
+		<span class="p">}</span>
+		<span class="k">return</span> <span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></code></pre></figure>
 
 <p>(I could get used to this). <code class="highlighter-rouge">InstMatch</code> and <code class="highlighter-rouge">InstFail</code> are obvious.</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="x">	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstMatch</span><span class="o">:</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="no">true</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstFail</span><span class="o">:</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="no">false</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstMatch</span><span class="o">:</span>
+		<span class="k">return</span> <span class="no">true</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstFail</span><span class="o">:</span>
+		<span class="k">return</span> <span class="no">false</span></code></pre></figure>
 
 <p>Then there come the various ways of matching runes. Note that this is the only time we have to increment the index into our input, as this is the only time we actually consume any runes.</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="x">	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstRune</span><span class="o">:</span><span class="x">
-		</span><span class="k">if</span><span class="x"> </span><span class="n">cur</span><span class="x"> </span><span class="o">==</span><span class="x"> </span><span class="o">-</span><span class="m">1</span><span class="x"> </span><span class="o">||</span><span class="x"> </span><span class="o">!</span><span class="n">i</span><span class="o">.</span><span class="n">MatchRune</span><span class="p">(</span><span class="n">cur</span><span class="p">)</span><span class="x"> </span><span class="p">{</span><span class="x">
-			</span><span class="k">return</span><span class="x"> </span><span class="no">false</span><span class="x">
-		</span><span class="p">}</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span><span class="x"> </span><span class="n">input</span><span class="p">,</span><span class="x"> </span><span class="n">idx</span><span class="o">+</span><span class="m">1</span><span class="p">)</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstRune1</span><span class="o">:</span><span class="x">
-		</span><span class="k">if</span><span class="x"> </span><span class="n">cur</span><span class="x"> </span><span class="o">==</span><span class="x"> </span><span class="o">-</span><span class="m">1</span><span class="x"> </span><span class="o">||</span><span class="x"> </span><span class="n">cur</span><span class="x"> </span><span class="o">!=</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Rune</span><span class="p">[</span><span class="m">0</span><span class="p">]</span><span class="x"> </span><span class="p">{</span><span class="x">
-			</span><span class="k">return</span><span class="x"> </span><span class="no">false</span><span class="x">
-		</span><span class="p">}</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span><span class="x"> </span><span class="n">input</span><span class="p">,</span><span class="x"> </span><span class="n">idx</span><span class="o">+</span><span class="m">1</span><span class="p">)</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstRuneAny</span><span class="o">:</span><span class="x">
-		</span><span class="k">if</span><span class="x"> </span><span class="n">cur</span><span class="x"> </span><span class="o">==</span><span class="x"> </span><span class="o">-</span><span class="m">1</span><span class="x"> </span><span class="p">{</span><span class="x">
-			</span><span class="k">return</span><span class="x"> </span><span class="no">false</span><span class="x">
-		</span><span class="p">}</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span><span class="x"> </span><span class="n">input</span><span class="p">,</span><span class="x"> </span><span class="n">idx</span><span class="o">+</span><span class="m">1</span><span class="p">)</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstRuneAnyNotNL</span><span class="o">:</span><span class="x">
-		</span><span class="k">if</span><span class="x"> </span><span class="n">cur</span><span class="x"> </span><span class="o">==</span><span class="x"> </span><span class="o">-</span><span class="m">1</span><span class="x"> </span><span class="o">||</span><span class="x"> </span><span class="n">cur</span><span class="x"> </span><span class="o">==</span><span class="x"> </span><span class="sc">'\n'</span><span class="x"> </span><span class="p">{</span><span class="x">
-			</span><span class="k">return</span><span class="x"> </span><span class="no">false</span><span class="x">
-		</span><span class="p">}</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span><span class="x"> </span><span class="n">input</span><span class="p">,</span><span class="x"> </span><span class="n">idx</span><span class="o">+</span><span class="m">1</span><span class="p">)</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstRune</span><span class="o">:</span>
+		<span class="k">if</span> <span class="n">cur</span> <span class="o">==</span> <span class="o">-</span><span class="m">1</span> <span class="o">||</span> <span class="o">!</span><span class="n">i</span><span class="o">.</span><span class="n">MatchRune</span><span class="p">(</span><span class="n">cur</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="no">false</span>
+		<span class="p">}</span>
+		<span class="k">return</span> <span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">idx</span><span class="o">+</span><span class="m">1</span><span class="p">)</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstRune1</span><span class="o">:</span>
+		<span class="k">if</span> <span class="n">cur</span> <span class="o">==</span> <span class="o">-</span><span class="m">1</span> <span class="o">||</span> <span class="n">cur</span> <span class="o">!=</span> <span class="n">i</span><span class="o">.</span><span class="n">Rune</span><span class="p">[</span><span class="m">0</span><span class="p">]</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="no">false</span>
+		<span class="p">}</span>
+		<span class="k">return</span> <span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">idx</span><span class="o">+</span><span class="m">1</span><span class="p">)</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstRuneAny</span><span class="o">:</span>
+		<span class="k">if</span> <span class="n">cur</span> <span class="o">==</span> <span class="o">-</span><span class="m">1</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="no">false</span>
+		<span class="p">}</span>
+		<span class="k">return</span> <span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">idx</span><span class="o">+</span><span class="m">1</span><span class="p">)</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstRuneAnyNotNL</span><span class="o">:</span>
+		<span class="k">if</span> <span class="n">cur</span> <span class="o">==</span> <span class="o">-</span><span class="m">1</span> <span class="o">||</span> <span class="n">cur</span> <span class="o">==</span> <span class="sc">'\n'</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="no">false</span>
+		<span class="p">}</span>
+		<span class="k">return</span> <span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">idx</span><span class="o">+</span><span class="m">1</span><span class="p">)</span></code></pre></figure>
 
 <p>That’s it. Now some due diligence against us being bad programmers, and we’re done.</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="x">	</span><span class="k">default</span><span class="o">:</span><span class="x">
-		</span><span class="nb">panic</span><span class="p">(</span><span class="s">"Invalid instruction."</span><span class="p">)</span><span class="x">
-	</span><span class="p">}</span><span class="x">
-	</span><span class="nb">panic</span><span class="p">(</span><span class="s">"Fell off the switch."</span><span class="p">)</span><span class="x">
-</span><span class="p">}</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">default</span><span class="o">:</span>
+		<span class="nb">panic</span><span class="p">(</span><span class="s">"Invalid instruction."</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nb">panic</span><span class="p">(</span><span class="s">"Fell off the switch."</span><span class="p">)</span>
+<span class="p">}</span></code></pre></figure>
 
 <p>Well, that was fun. But not terribly exciting. But what this gives is as good mental model of what exactly the different instructions mean, which can be used to build more exciting things.</p>
 
@@ -281,80 +281,80 @@
 
 <p>Let’s start with a similar prototype as for our <code class="highlighter-rouge">Match</code> function, but instead of our input let’s have something that flips around whether we are at an even or odd step. For reasons that will make sense later, let’s encode this as an integer that flips between <code class="highlighter-rouge">0</code> and <code class="highlighter-rouge">1</code> (so it’s <code class="highlighter-rouge">idx % 2</code>). We also need to keep track of which nodes we have seen before, or we will wait for a long time. But if you think about it a bit, we need to keep track of this for even and odd steps, an even visit and an odd visit are not the same. That results in the beautiful type of <code class="highlighter-rouge">map[int]map[uint32]bool</code>, or a map from an integer to a set of <code class="highlighter-rouge">uint32</code>.</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span><span class="x"> </span><span class="n">Even</span><span class="p">(</span><span class="n">p</span><span class="x"> </span><span class="o">*</span><span class="n">syntax</span><span class="o">.</span><span class="n">Prog</span><span class="p">,</span><span class="x"> </span><span class="n">pc</span><span class="x"> </span><span class="kt">uint32</span><span class="p">,</span><span class="x"> </span><span class="n">idx</span><span class="x"> </span><span class="kt">int</span><span class="p">,</span><span class="x"> </span><span class="k">map</span><span class="p">[</span><span class="kt">int</span><span class="p">]</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="p">)</span><span class="x"> </span><span class="kt">bool</span><span class="x"> </span><span class="p">{</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span> <span class="n">Even</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span><span class="n">syntax</span><span class="o">.</span><span class="n">Prog</span><span class="p">,</span> <span class="n">pc</span> <span class="kt">uint32</span><span class="p">,</span> <span class="n">idx</span> <span class="kt">int</span><span class="p">,</span> <span class="k">map</span><span class="p">[</span><span class="kt">int</span><span class="p">]</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span></code></pre></figure>
 
 <p>Now let’s start with the easy part. I literally copy &amp; pasted the <code class="highlighter-rouge">Match</code> code, removed all the stuff that actually does any … matching, plumbed through the visited map and made <code class="highlighter-rouge">idx</code> mod 2. That gives us all the rune instructions and <code class="highlighter-rouge">InstCapture</code>, <code class="highlighter-rouge">InstNop</code> and <code class="highlighter-rouge">InstEmptyWidth</code> (which are all, for all intents and purposes, noop).</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="x">	</span><span class="n">i</span><span class="x"> </span><span class="o">:=</span><span class="x"> </span><span class="n">p</span><span class="o">.</span><span class="n">Inst</span><span class="p">[</span><span class="n">pc</span><span class="p">]</span><span class="x">
-	</span><span class="k">switch</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Op</span><span class="x"> </span><span class="p">{</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstNop</span><span class="o">:</span><span class="x">
-		</span><span class="k">fallthrough</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstCapture</span><span class="o">:</span><span class="x">
-		</span><span class="k">fallthrough</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstEmptyWidth</span><span class="o">:</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="n">Even</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span><span class="x"> </span><span class="n">idx</span><span class="p">,</span><span class="x"> </span><span class="n">visited</span><span class="p">)</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstRune</span><span class="o">:</span><span class="x">
-		</span><span class="k">fallthrough</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstRune1</span><span class="o">:</span><span class="x">
-		</span><span class="k">fallthrough</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstRuneAny</span><span class="o">:</span><span class="x">
-		</span><span class="k">fallthrough</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstRuneAnyNotNL</span><span class="o">:</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="n">Even</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span><span class="x"> </span><span class="p">(</span><span class="n">idx</span><span class="o">+</span><span class="m">1</span><span class="p">)</span><span class="o">%</span><span class="m">2</span><span class="p">,</span><span class="x"> </span><span class="n">visited</span><span class="p">)</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="n">i</span> <span class="o">:=</span> <span class="n">p</span><span class="o">.</span><span class="n">Inst</span><span class="p">[</span><span class="n">pc</span><span class="p">]</span>
+	<span class="k">switch</span> <span class="n">i</span><span class="o">.</span><span class="n">Op</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstNop</span><span class="o">:</span>
+		<span class="k">fallthrough</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstCapture</span><span class="o">:</span>
+		<span class="k">fallthrough</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstEmptyWidth</span><span class="o">:</span>
+		<span class="k">return</span> <span class="n">Even</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">visited</span><span class="p">)</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstRune</span><span class="o">:</span>
+		<span class="k">fallthrough</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstRune1</span><span class="o">:</span>
+		<span class="k">fallthrough</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstRuneAny</span><span class="o">:</span>
+		<span class="k">fallthrough</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstRuneAnyNotNL</span><span class="o">:</span>
+		<span class="k">return</span> <span class="n">Even</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span> <span class="p">(</span><span class="n">idx</span><span class="o">+</span><span class="m">1</span><span class="p">)</span><span class="o">%</span><span class="m">2</span><span class="p">,</span> <span class="n">visited</span><span class="p">)</span></code></pre></figure>
 
 <p><code class="highlighter-rouge">InstMatch</code> is straightforward, as we just have to check whether we are at an even step. <code class="highlighter-rouge">InstFail</code> confusingly returns <code class="highlighter-rouge">true</code>, as we do not care about branches that do not lead to matches.</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="x">	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstMatch</span><span class="o">:</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="n">idx</span><span class="x"> </span><span class="o">==</span><span class="x"> </span><span class="m">0</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstFail</span><span class="o">:</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="no">true</span><span class="x"> </span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstMatch</span><span class="o">:</span>
+		<span class="k">return</span> <span class="n">idx</span> <span class="o">==</span> <span class="m">0</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstFail</span><span class="o">:</span>
+		<span class="k">return</span> <span class="no">true</span> </code></pre></figure>
 
 <p>Now to one of my least favourite parts of Golang, copying nested maps. But here we go. Let’s introduce a helper method, as when we branch for <code class="highlighter-rouge">InstAlt</code> we will need a separate ropy of the visited map for both branches.</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span><span class="x"> </span><span class="n">copyVisited</span><span class="p">(</span><span class="n">visited</span><span class="x"> </span><span class="k">map</span><span class="p">[</span><span class="kt">int</span><span class="p">]</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="p">)</span><span class="x"> </span><span class="k">map</span><span class="p">[</span><span class="kt">int</span><span class="p">]</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="x"> </span><span class="p">{</span><span class="x">
-	</span><span class="n">n</span><span class="x"> </span><span class="o">:=</span><span class="x"> </span><span class="nb">make</span><span class="p">(</span><span class="k">map</span><span class="p">[</span><span class="kt">int</span><span class="p">]</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="p">)</span><span class="x">
-	</span><span class="k">for</span><span class="x"> </span><span class="n">k</span><span class="p">,</span><span class="x"> </span><span class="n">v</span><span class="x"> </span><span class="o">:=</span><span class="x"> </span><span class="k">range</span><span class="x"> </span><span class="n">visited</span><span class="x"> </span><span class="p">{</span><span class="x">
-		</span><span class="k">if</span><span class="x"> </span><span class="n">n</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="x"> </span><span class="o">==</span><span class="x"> </span><span class="no">nil</span><span class="x"> </span><span class="p">{</span><span class="x">
-			</span><span class="n">n</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="x"> </span><span class="o">=</span><span class="x"> </span><span class="nb">make</span><span class="p">(</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="p">)</span><span class="x">
-		</span><span class="p">}</span><span class="x">
-		</span><span class="k">for</span><span class="x"> </span><span class="n">k2</span><span class="p">,</span><span class="x"> </span><span class="n">v2</span><span class="x"> </span><span class="o">:=</span><span class="x"> </span><span class="k">range</span><span class="x"> </span><span class="n">v</span><span class="x"> </span><span class="p">{</span><span class="x">
-			</span><span class="n">n</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">k2</span><span class="p">]</span><span class="x"> </span><span class="o">=</span><span class="x"> </span><span class="n">v2</span><span class="x">
-		</span><span class="p">}</span><span class="x">
-	</span><span class="p">}</span><span class="x">
-	</span><span class="k">return</span><span class="x"> </span><span class="n">n</span><span class="x">
-</span><span class="p">}</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span> <span class="n">copyVisited</span><span class="p">(</span><span class="n">visited</span> <span class="k">map</span><span class="p">[</span><span class="kt">int</span><span class="p">]</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="p">)</span> <span class="k">map</span><span class="p">[</span><span class="kt">int</span><span class="p">]</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span> <span class="p">{</span>
+	<span class="n">n</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="k">map</span><span class="p">[</span><span class="kt">int</span><span class="p">]</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="p">)</span>
+	<span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="n">visited</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">==</span> <span class="no">nil</span> <span class="p">{</span>
+			<span class="n">n</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">make</span><span class="p">(</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="k">for</span> <span class="n">k2</span><span class="p">,</span> <span class="n">v2</span> <span class="o">:=</span> <span class="k">range</span> <span class="n">v</span> <span class="p">{</span>
+			<span class="n">n</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">k2</span><span class="p">]</span> <span class="o">=</span> <span class="n">v2</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="n">n</span>
+<span class="p">}</span></code></pre></figure>
 
 <p>OK, with that out of the way, we can tackle the <code class="highlighter-rouge">InstAlt</code> instructions.</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="x">	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstAlt</span><span class="o">:</span><span class="x">
-		</span><span class="k">fallthrough</span><span class="x">
-	</span><span class="k">case</span><span class="x"> </span><span class="n">syntax</span><span class="o">.</span><span class="n">InstAltMatch</span><span class="o">:</span><span class="x">
-		</span><span class="n">branchvisited</span><span class="x"> </span><span class="o">:=</span><span class="x"> </span><span class="n">copyVisited</span><span class="p">(</span><span class="n">visited</span><span class="p">)</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="n">Even</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span><span class="x"> </span><span class="n">idx</span><span class="p">,</span><span class="x"> </span><span class="n">visited</span><span class="p">)</span><span class="x"> </span><span class="o">&amp;&amp;</span><span class="x"> </span><span class="n">Even</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="x"> </span><span class="n">i</span><span class="o">.</span><span class="n">Arg</span><span class="p">,</span><span class="x"> </span><span class="n">idx</span><span class="p">,</span><span class="x"> </span><span class="n">branchvisited</span><span class="p">)</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstAlt</span><span class="o">:</span>
+		<span class="k">fallthrough</span>
+	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstAltMatch</span><span class="o">:</span>
+		<span class="n">branchvisited</span> <span class="o">:=</span> <span class="n">copyVisited</span><span class="p">(</span><span class="n">visited</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">Even</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">visited</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">Even</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Arg</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">branchvisited</span><span class="p">)</span></code></pre></figure>
 
 <p>This one is different, as we want to make sure we can <em>only</em> match even length strings, so we need to <code class="highlighter-rouge">&amp;&amp;</code> the conditions, rather than <code class="highlighter-rouge">||</code> them.</p>
 
 <p>Due diligence again.</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="x">	</span><span class="k">default</span><span class="o">:</span><span class="x">
-		</span><span class="nb">panic</span><span class="p">(</span><span class="s">"Invalid instruction."</span><span class="p">)</span><span class="x">
-	</span><span class="p">}</span><span class="x">
-	</span><span class="nb">panic</span><span class="p">(</span><span class="s">"Fell off the switch."</span><span class="p">)</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">default</span><span class="o">:</span>
+		<span class="nb">panic</span><span class="p">(</span><span class="s">"Invalid instruction."</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nb">panic</span><span class="p">(</span><span class="s">"Fell off the switch."</span><span class="p">)</span></code></pre></figure>
 
 <p>If we stop for a second to see what we’ve built, it’s obvious we’ve built a potential infinite loop. Let’s rectify this. If we arrive back at an instruction that we’ve been before with the same <code class="highlighter-rouge">idx % 2</code>, we can just prune this branch and return <code class="highlighter-rouge">true</code> as it is exactly the same.</p>
 
 <p>So let’s prepend our switch statement with the following.</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="x">	</span><span class="k">if</span><span class="x"> </span><span class="n">visited</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="n">pc</span><span class="p">]</span><span class="x"> </span><span class="p">{</span><span class="x">
-		</span><span class="k">return</span><span class="x"> </span><span class="no">true</span><span class="x">
-	</span><span class="p">}</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">if</span> <span class="n">visited</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="n">pc</span><span class="p">]</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="no">true</span>
+	<span class="p">}</span></code></pre></figure>
 
 <p>And then, of course, we need to keep track of what we’ve seen before, which again involves one of my least favourite parts of Golang, nested maps.</p>
 
-<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="x">	</span><span class="k">if</span><span class="x"> </span><span class="n">visited</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="x"> </span><span class="o">==</span><span class="x"> </span><span class="no">nil</span><span class="x"> </span><span class="p">{</span><span class="x">
-		</span><span class="n">visited</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="x"> </span><span class="o">=</span><span class="x"> </span><span class="nb">make</span><span class="p">(</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="p">)</span><span class="x">
-	</span><span class="p">}</span><span class="x">
-	</span><span class="n">visited</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="n">pc</span><span class="p">]</span><span class="x"> </span><span class="o">=</span><span class="x"> </span><span class="no">true</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">if</span> <span class="n">visited</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">==</span> <span class="no">nil</span> <span class="p">{</span>
+		<span class="n">visited</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="nb">make</span><span class="p">(</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="n">visited</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="n">pc</span><span class="p">]</span> <span class="o">=</span> <span class="no">true</span></code></pre></figure>
 
 <p>And that’s done! To see the whole code used in this post head of to this <a href="https://gist.github.com/segfaulthunter/25a8fb5502ebddd413c00eada4ff18bf">Github Gist</a>.</p>
 
