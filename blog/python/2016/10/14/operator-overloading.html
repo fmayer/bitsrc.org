@@ -10,8 +10,8 @@
   <meta name="description" content="The other day I was asked to take a look at code I had written years ago that basicallyallowed the user to build up logical formulas while always keeping the...">
 
   <link rel="stylesheet" href="/blog/css/main.css">
-  <link rel="canonical" href="http://bitsrc.org//blog/python/2016/10/14/operator-overloading.html">
-  <link rel="alternate" type="application/rss+xml" title="Strings over Σ" href="http://bitsrc.org//blog/feed.xml" />
+  <link rel="canonical" href="http:/bitsrc.org/blog/python/2016/10/14/operator-overloading.html">
+  <link rel="alternate" type="application/rss+xml" title="Strings over Σ" href="http:/bitsrc.org/blog/feed.xml" />
 <script type="text/javascript"
     src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
 </script>
@@ -121,17 +121,17 @@ expression will be evaluating using that. So when you read <code class="highligh
 is used of the left hand side does not implement the operator, that is wrong. For instance,</p>
 
 <figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="n">In</span> <span class="p">[</span><span class="mi">18</span><span class="p">]:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="o">...</span><span class="p">:</span>     <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-    <span class="o">...</span><span class="p">:</span>         <span class="k">print</span> <span class="s">"Foo "</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">x</span>
-    <span class="o">...</span><span class="p">:</span>         
+    <span class="p">...:</span>     <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="p">...:</span>         <span class="k">print</span> <span class="s">"Foo "</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">x</span>
+    <span class="p">...:</span>         
 
 <span class="n">In</span> <span class="p">[</span><span class="mi">19</span><span class="p">]:</span> <span class="k">class</span> <span class="nc">Qux</span><span class="p">(</span><span class="n">Foo</span><span class="p">):</span>
-    <span class="o">...</span><span class="p">:</span>     <span class="k">def</span> <span class="nf">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-    <span class="o">...</span><span class="p">:</span>         <span class="k">print</span> <span class="s">"Qux "</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">x</span>
-    <span class="o">...</span><span class="p">:</span>         
+    <span class="p">...:</span>     <span class="k">def</span> <span class="nf">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="p">...:</span>         <span class="k">print</span> <span class="s">"Qux "</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">x</span>
+    <span class="p">...:</span>         
 
 <span class="n">In</span> <span class="p">[</span><span class="mi">20</span><span class="p">]:</span> <span class="n">Foo</span><span class="p">()</span> <span class="o">+</span> <span class="n">Qux</span><span class="p">()</span>
-<span class="n">Qux</span>  <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Qux</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f9f750</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Foo</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f7e510</span><span class="o">&gt;</span></code></pre></figure>
+<span class="n">Qux</span>  <span class="o">&lt;</span><span class="n">__main__</span><span class="p">.</span><span class="n">Qux</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f9f750</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">__main__</span><span class="p">.</span><span class="n">Foo</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f7e510</span><span class="o">&gt;</span></code></pre></figure>
 
 <p>This behaviour was what I was aiming to exploit by making <code class="highlighter-rouge">ExprAnd</code> (for instance) implement
 both <code class="highlighter-rouge">__and__</code> and <code class="highlighter-rouge">__rand__</code> and make Python use the most specific implementation. Sadly, it
@@ -139,10 +139,10 @@ does not work this way. If you now introduce a third class that inherits from Fo
 implement either of the methods itself, the base class’ will be used, for instance</p>
 
 <figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="n">In</span> <span class="p">[</span><span class="mi">21</span><span class="p">]:</span> <span class="k">class</span> <span class="nc">Bar</span><span class="p">(</span><span class="n">Foo</span><span class="p">):</span>
-    <span class="o">...</span><span class="p">:</span>     <span class="k">pass</span>
-    <span class="o">...</span><span class="p">:</span> 
+    <span class="p">...:</span>     <span class="k">pass</span>
+    <span class="p">...:</span> 
 <span class="n">In</span> <span class="p">[</span><span class="mi">22</span><span class="p">]:</span> <span class="n">Bar</span><span class="p">()</span> <span class="o">+</span> <span class="n">Qux</span><span class="p">()</span>
-<span class="n">Foo</span>  <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Bar</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f80890</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Qux</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f93a90</span><span class="o">&gt;</span></code></pre></figure>
+<span class="n">Foo</span>  <span class="o">&lt;</span><span class="n">__main__</span><span class="p">.</span><span class="n">Bar</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f80890</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">__main__</span><span class="p">.</span><span class="n">Qux</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f93a90</span><span class="o">&gt;</span></code></pre></figure>
 
 <p>The semantics of Python operator overloading will <em>only</em> prefer the <code class="highlighter-rouge">__rand__</code> method of the
 right hand side if it is an object of a subclass of the <em>type of the right hand side object</em>.
@@ -174,8 +174,8 @@ an unbound method object by using <code class="highlighter-rouge">im_func</code>
 <figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="kn">import</span> <span class="nn">inspect</span>
 
 <span class="k">def</span> <span class="nf">fn_mro</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
-    <span class="n">mro</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmro</span><span class="p">(</span><span class="n">cls</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">im_func</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">mro</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fn</span><span class="p">)]</span></code></pre></figure>
+    <span class="n">mro</span> <span class="o">=</span> <span class="n">inspect</span><span class="p">.</span><span class="n">getmro</span><span class="p">(</span><span class="n">cls</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fn</span><span class="p">).</span><span class="n">im_func</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">mro</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fn</span><span class="p">)]</span></code></pre></figure>
 
 <p>This can then be used to implement the logic as described above as a decorator that wraps
 a method. Note that we have to compare whether the left and right side operator is actually the
@@ -183,14 +183,14 @@ same to prevent an infinite loop.</p>
 
 <figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">most_specific</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">__name__</span>
-        <span class="n">self_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">im_func</span>
-        <span class="n">other_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">im_func</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">fn</span><span class="p">.</span><span class="n">__name__</span>
+        <span class="n">self_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">).</span><span class="n">im_func</span>
+        <span class="n">other_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">name</span><span class="p">).</span><span class="n">im_func</span>
         <span class="k">if</span> <span class="n">self_fn</span> <span class="o">==</span> <span class="n">other_fn</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">self_fn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fn_mro</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">self_fn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fn_mro</span><span class="p">(</span><span class="n">other</span><span class="p">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
             <span class="c1"># We did not inherit this from something in other's MRO.
-</span>            <span class="k">if</span> <span class="n">other_fn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fn_mro</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+</span>            <span class="k">if</span> <span class="n">other_fn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fn_mro</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
                 <span class="c1"># They didn't either. PANIC!
 </span>                <span class="k">raise</span> <span class="nb">TypeError</span>
             <span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
@@ -206,23 +206,23 @@ and uses the same operations on both sides).</p>
     <span class="o">@</span><span class="n">most_specific</span>
     <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">print</span> <span class="s">"Foo "</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">x</span>
-   <span class="o">...</span><span class="p">:</span>         
+   <span class="p">...:</span>         
 
 <span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="k">class</span> <span class="nc">Qux</span><span class="p">(</span><span class="n">Foo</span><span class="p">):</span>
     <span class="o">@</span><span class="n">most_specific</span>
     <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">print</span> <span class="s">"Qux "</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">x</span>
-   <span class="o">...</span><span class="p">:</span>         
+   <span class="p">...:</span>         
 
 <span class="n">In</span> <span class="p">[</span><span class="mi">9</span><span class="p">]:</span> <span class="n">Foo</span><span class="p">()</span> <span class="o">+</span> <span class="n">Qux</span><span class="p">()</span>
-<span class="n">Qux</span>  <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Qux</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x103103690</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Foo</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x103103f50</span><span class="o">&gt;</span>
+<span class="n">Qux</span>  <span class="o">&lt;</span><span class="n">__main__</span><span class="p">.</span><span class="n">Qux</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x103103690</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">__main__</span><span class="p">.</span><span class="n">Foo</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x103103f50</span><span class="o">&gt;</span>
 
 <span class="n">In</span> <span class="p">[</span><span class="mi">10</span><span class="p">]:</span> <span class="k">class</span> <span class="nc">Bar</span><span class="p">(</span><span class="n">Foo</span><span class="p">):</span>
-   <span class="o">....</span><span class="p">:</span>     <span class="k">pass</span>
-   <span class="o">....</span><span class="p">:</span> 
+   <span class="p">....:</span>     <span class="k">pass</span>
+   <span class="p">....:</span> 
 
 <span class="n">In</span> <span class="p">[</span><span class="mi">11</span><span class="p">]:</span> <span class="n">Bar</span><span class="p">()</span> <span class="o">+</span> <span class="n">Qux</span><span class="p">()</span>
-<span class="n">Qux</span>  <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Qux</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x103103e50</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">__main__</span><span class="o">.</span><span class="n">Bar</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x10310b050</span><span class="o">&gt;</span></code></pre></figure>
+<span class="n">Qux</span>  <span class="o">&lt;</span><span class="n">__main__</span><span class="p">.</span><span class="n">Qux</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x103103e50</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">__main__</span><span class="p">.</span><span class="n">Bar</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x10310b050</span><span class="o">&gt;</span></code></pre></figure>
 
 
   </article>

@@ -4,11 +4,410 @@
     <title>Strings over Σ</title>
     <description>A blog about computer science, logic and programming. Occasionally other topics reasonably consistent with the rest.
 </description>
-    <link>http://bitsrc.org//blog/</link>
-    <atom:link href="http://bitsrc.org//blog/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Thu, 16 Apr 2020 00:40:35 +0200</pubDate>
-    <lastBuildDate>Thu, 16 Apr 2020 00:40:35 +0200</lastBuildDate>
+    <link>http:/bitsrc.org/blog/</link>
+    <atom:link href="http:/bitsrc.org/blog/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Sun, 19 Apr 2020 17:36:49 +0200</pubDate>
+    <lastBuildDate>Sun, 19 Apr 2020 17:36:49 +0200</lastBuildDate>
     <generator>Jekyll v4.0.0</generator>
+    
+      <item>
+        <title>Linux: The good, the bad and the ugly</title>
+        <description>&lt;p&gt;I’ve been working on system-level software for Linux for some time now,
+which is a job that makes you much more likely to encounter the odd corner
+of an operating system than higher level development. For all practical
+purposes, Linux has succeeded as an operating system. Billions of web queries
+are being served from Linux servers every day, and it’s running on &lt;a href=&quot;https://twitter.com/Android/status/1125822326183014401&quot;&gt;billions&lt;/a&gt; of
+mobile devices.&lt;/p&gt;
+
+&lt;p&gt;But of course an operating system ultimately rooted in the 70s will have
+accumulated its fair share of legacy. Of course, not all problems are rooted
+in this: we still are perfectly capable of making new and exciting mistakes.&lt;/p&gt;
+
+&lt;h1 id=&quot;everything-ish-is-a-file-ish&quot;&gt;Everything-ish is a file-ish&lt;/h1&gt;
+&lt;p&gt;File descriptors are one of the most poorly named concepts, as they don’t
+necessarily represent (or describe) a file. Think of them more as pointers to
+resources in the kernel (which are conveniently referenced-counted), and things
+will start making more sense. You can use file descriptors to refer to many
+things, among them&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;http://man7.org/linux/man-pages/man2/open.2.html&quot;&gt;Files and Directories&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://man7.org/linux/man-pages/man2/socket.2.html&quot;&gt;Sockets&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://man7.org/linux/man-pages/man2/pipe.2.html&quot;&gt;Pipes&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://man7.org/linux/man-pages/man2/timerfd_create.2.html&quot;&gt;Timers&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://man7.org/linux/man-pages/man2/signalfd.2.html&quot;&gt;Incoming signals&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://man7.org/linux/man-pages/man2/memfd_create.2.html&quot;&gt;Anonymous memory&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://man7.org/linux/man-pages/man2/eventfd.2.html&quot;&gt;Events&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://man7.org/linux/man-pages/man2/pidfd_open.2.html&quot;&gt;Processes&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://man7.org/linux/man-pages/man2/perf_event_open.2.html&quot;&gt;Performance counters&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Sadly, &lt;a href=&quot;https://lwn.net/Articles/280960/&quot;&gt;not locks&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Many of these things are not files in the either the sense that you can use
+them to store data, nor in the sense that they have a path on the file system.
+That all of these things are file descriptors is actually kind of cool: you can
+wait on many of these things, and asynchronous I/O APIs like &lt;code class=&quot;highlighter-rouge&quot;&gt;epoll&lt;/code&gt; operate on
+file descriptors. This means that you can wait for data to become available on
+some socket &lt;em&gt;or&lt;/em&gt; for some timer to run out &lt;em&gt;or&lt;/em&gt; for a POSIX signal to arrive.
+No threading nonsense involved.&lt;/p&gt;
+
+&lt;p&gt;On the other hand, a file descriptor to an application developer is just an
+integer. From an API perspective, now you end up with all of these things just
+being integers, and all being called fd, and many functions operating on fds,
+all of them working on a different subset of them. For instance, what would it
+even mean to write to a timerfd? This gets even worse when talking about errors.
+Manpages will have a list of possible errnos, but with file descriptor
+functions, usually all bets are off (short of delving into the kernel source)
+of trying to understand which ones can happen for your particular case. If
+your FD is special enough (say, some &lt;code class=&quot;highlighter-rouge&quot;&gt;/sys&lt;/code&gt; file), you might even get errors
+that are &lt;em&gt;not&lt;/em&gt; listed on the manpage.&lt;/p&gt;
+
+&lt;h1 id=&quot;quiz&quot;&gt;“Everything is bytes\n\0”&lt;/h1&gt;
+&lt;p&gt;Linux has around 300 system calls that you can use in your programs. This is
+sometimes cited as an impressively small API surface for a kernel,
+but that’s only telling half of the truth. There are many, many files in the
+&lt;code class=&quot;highlighter-rouge&quot;&gt;/proc&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;/sys&lt;/code&gt; virtual file-systems that you can read from to get
+information or write to to change some behaviour. You can use them to read a
+process’ command line, to get its CPU use, its memory use, to get or change the
+maximum number of file-descriptors open, set counters on breakpoints, etc.
+Long story short, you can do many things. If you are writing systems software,
+you will be using those quite a lot.&lt;/p&gt;
+
+&lt;p&gt;Most of those produce (or consume) information in ASCII, so if you want to use
+them programatically, you’ll have to parse the output. If you want to do that,
+it helps to know the format well.&lt;/p&gt;
+
+&lt;p&gt;Pop quiz! No cheating.&lt;sup id=&quot;fnref:2&quot;&gt;&lt;a href=&quot;#fn:2&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt;&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Does &lt;code class=&quot;highlighter-rouge&quot;&gt;/proc/&amp;lt;pid&amp;gt;/cmdline&lt;/code&gt; have a trailing NUL-byte?&lt;/li&gt;
+  &lt;li&gt;Does &lt;code class=&quot;highlighter-rouge&quot;&gt;/proc/&amp;lt;pid&amp;gt;/status&lt;/code&gt; use tabs or spaces?&lt;/li&gt;
+  &lt;li&gt;Does &lt;code class=&quot;highlighter-rouge&quot;&gt;/proc/&amp;lt;pid&amp;gt;/status&lt;/code&gt; have a trailing newline?&lt;/li&gt;
+  &lt;li&gt;NUL-byte?&lt;/li&gt;
+  &lt;li&gt;Does &lt;code class=&quot;highlighter-rouge&quot;&gt;/proc/&amp;lt;pid&amp;gt;/oom_score&lt;/code&gt; (a single value) have a trailing newline?&lt;/li&gt;
+  &lt;li&gt;Does &lt;code class=&quot;highlighter-rouge&quot;&gt;/proc/&amp;lt;pid&amp;gt;/wchan&lt;/code&gt; (a single value) have a trailing newline?&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;a href=&quot;#quiz-results&quot;&gt;Go to results&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;So that was fun! If you haven’t looked at the results yet, please do take a
+second, even if you haven’t tried to answer yourself. There are multiple problems
+highlighted: most of &lt;code class=&quot;highlighter-rouge&quot;&gt;/proc&lt;/code&gt; files are ad-hoc text formats (at least &lt;em&gt;most&lt;/em&gt; of
+them do use newlines, it appears). Another one is that they are extremely poorly
+documented. A quick look at &lt;a href=&quot;http://man7.org/linux/man-pages/man5/proc.5.html&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;man 5 proc&lt;/code&gt;&lt;/a&gt; would not go far in answering
+the questions in this quiz. You have to look at the files and work out the
+format from this. Of course, if you read this from a program, the kernel
+rendering text only for your program to parse it back again is wasteful in both
+computer and human resources. This being ad-hoc formats, one has to write a
+parser for each and every one of them.&lt;/p&gt;
+
+&lt;p&gt;For some high-volume formats like ftrace, parsing from the text format is
+actually prohibitively expensive. This is why there is also a (undocumented)
+de-facto binary interface. With some configuration in, yes, you guessed it,
+a custom text format.&lt;/p&gt;
+
+&lt;h1 id=&quot;manything-is-a-race&quot;&gt;Manything is a race&lt;/h1&gt;
+&lt;p&gt;How would you implement &lt;code class=&quot;highlighter-rouge&quot;&gt;killall&lt;/code&gt;? Conceptually, it’s fairly simple: you go
+through all processes, and kill the ones matching. Having some function
+&lt;code class=&quot;highlighter-rouge&quot;&gt;matches&lt;/code&gt; to determine whether a PID matches the given specification, you’d
+write something along the lines of this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-c--&quot; data-lang=&quot;c++&quot;&gt;&lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;vector&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pid_t&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pids&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;get_all_pids&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pid_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pids&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;matches&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;kill&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Cool. That seems to work (given some imagination). But if you are a diligent
+programmer, maybe having done some multi-threaded programming, something might
+look a bit off. All we pass around is an integer &lt;code class=&quot;highlighter-rouge&quot;&gt;pid&lt;/code&gt;, so how do we know it
+refers to the same process in &lt;code class=&quot;highlighter-rouge&quot;&gt;match(pid)&lt;/code&gt; and in &lt;code class=&quot;highlighter-rouge&quot;&gt;kill(pid)&lt;/code&gt;? Processes can
+go away, and their PIDs will be re-used. In that case, we could potentially
+match PID 1234 when it is &lt;code class=&quot;highlighter-rouge&quot;&gt;retriable_nonsense_job&lt;/code&gt;, but kill
+&lt;code class=&quot;highlighter-rouge&quot;&gt;super_important_process&lt;/code&gt; later.&lt;/p&gt;
+
+&lt;p&gt;So how do you write a &lt;em&gt;correct&lt;/em&gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;killall&lt;/code&gt;? Turns out, on Linux it’s impossible
+before 5.1, on other Unices it might still be. All the major operating systems’
+implementations are not fundamentally different to the pseudocode above&lt;sup id=&quot;fnref:1&quot;&gt;&lt;a href=&quot;#fn:1&quot; class=&quot;footnote&quot;&gt;2&lt;/a&gt;&lt;/sup&gt;.
+On Linux 5.1, you can &lt;code class=&quot;highlighter-rouge&quot;&gt;opendir&lt;/code&gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;/proc/\&amp;lt;pid\&amp;gt;&lt;/code&gt;, then use that as a handle to both
+read the command line (and other attributes), and &lt;code class=&quot;highlighter-rouge&quot;&gt;pidfd_send_signal&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;This might remind you of some code you might have written. Something like&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-c--&quot; data-lang=&quot;c++&quot;&gt;&lt;span class=&quot;n&quot;&gt;pid_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fork&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;oh&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;no&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;abort&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;something&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;child&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;status&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;YOUR_EINTR_WRAPPER&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;waitpid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;status&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Could PID-reuse mean you could end up waiting on something else? Something
+that might never exit, in the worst case? Thankfully, not.
+The child process will actually stick around as a &lt;em&gt;zombie&lt;/em&gt;, even
+if it is finished, until you waitpid for it. As you can only wait on your
+children, no race can occur like this. Of course, the other thing that can
+happen is that the parent dies before it has chance to waitpid. In that case,
+the problem is also averted through some gymnastics: the child process gets
+&lt;em&gt;orphaned&lt;/em&gt; and reparented to &lt;code class=&quot;highlighter-rouge&quot;&gt;init&lt;/code&gt;, which will wait on it to prevent the
+zombie from sticking around. &lt;em&gt;Phew&lt;/em&gt;.&lt;/p&gt;
+
+&lt;h1 id=&quot;for-forks-sake&quot;&gt;For fork’s sake&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://man7.org/linux/man-pages/man2/fork.2.html&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;fork&lt;/code&gt;&lt;/a&gt; is one of the
+fundamental building blocks of Unix systems. It goes way back to the old days of
+Unix and is used to create a new process. That process is a copy of the
+original one. From an API perspective, to the child it will appear that &lt;code class=&quot;highlighter-rouge&quot;&gt;fork&lt;/code&gt;
+returned 0, while to the parent the PID of the child. Kind of magical if you
+think of it.&lt;sup id=&quot;fnref:exhalation&quot;&gt;&lt;a href=&quot;#fn:exhalation&quot; class=&quot;footnote&quot;&gt;3&lt;/a&gt;&lt;/sup&gt;&lt;/p&gt;
+
+&lt;p&gt;Memory does not actually get copied just yet, but only when either the parent
+or the child attempt to change it (this is called copy-on-write). File
+descriptors will get duplicated (convenient that they are already referenced
+counted). Problems already start popping up here: you need to be sure to close
+the ones you don’t actually need in the child, or you might hold on to them
+forever. This gets even worse if you &lt;code class=&quot;highlighter-rouge&quot;&gt;exec&lt;/code&gt; another program, which (in general)
+won’t know or care about your file descriptors. To solve the latter problem,
+&lt;code class=&quot;highlighter-rouge&quot;&gt;O_CLOEXEC&lt;/code&gt; (close on exec) was invented. Of course that’s not the default, so
+people often manually iterate over all FDs (via &lt;code class=&quot;highlighter-rouge&quot;&gt;/proc&lt;/code&gt;), and then close them
+all.&lt;/p&gt;
+
+&lt;p&gt;But then came threads, and we went from bad to worse. Because it’s unclear what
+to do with all these other threads (it’s not like they have a call to fork where
+they could take different branches), they just get terminated in whatever state
+they are when fork gets called. Remember we copied the whole memory state? That
+might contain a lock (say, in &lt;code class=&quot;highlighter-rouge&quot;&gt;malloc&lt;/code&gt;) that was being held by one of those
+threads. The next time anything calls &lt;code class=&quot;highlighter-rouge&quot;&gt;malloc&lt;/code&gt;, it will be stuck forever,
+waiting on the now terminated thread. Your child process is toast. Your program
+might even be single threaded, but some library you pulled might have created a
+thread, that might have happened to do an allocation when you called fork.&lt;/p&gt;
+
+&lt;p&gt;They came up with &lt;code class=&quot;highlighter-rouge&quot;&gt;pthread_atfork&lt;/code&gt; hooks that get called before the fork, and
+then afterwards in the parent on the child. That was intended to allow library
+developers to make their libraries safe in the presence of forks, but even the
+manpage concedes that this “is generally too difficult to be practicable.”&lt;/p&gt;
+
+&lt;p&gt;But there’s more! Even though the memory isn’t actually copied, forking is
+still an expensive operation for the kernel. It has to copy all sorts of
+structures like page tables and so on. That’s a waste if all we are going
+to do is exec a new program, replacing the page tables once again. So
+they came up with &lt;code class=&quot;highlighter-rouge&quot;&gt;vfork&lt;/code&gt;, which is like fork except that you pinkie-promise
+not to call anything except &lt;code class=&quot;highlighter-rouge&quot;&gt;exec&lt;/code&gt; or &lt;code class=&quot;highlighter-rouge&quot;&gt;_exit&lt;/code&gt; afterwards. This raises
+questions about the API design: if all you are allowed to call is &lt;code class=&quot;highlighter-rouge&quot;&gt;exec&lt;/code&gt;, why
+not create a function that is the combination of vfork an exec? With all the
+different exec variations I can see how that would be slightly painful, but at
+least not something that makes it super easy to shoot your foot. In fact,
+&lt;code class=&quot;highlighter-rouge&quot;&gt;posix_spawn&lt;/code&gt; is exactly that and was standardised in 2001.&lt;/p&gt;
+
+&lt;p&gt;But going further down the route of forking, modern Linux also has something
+else up its sleeve: &lt;a href=&quot;http://man7.org/linux/man-pages/man2/clone.2.html&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;clone&lt;/code&gt;&lt;/a&gt;. That let’s you mix-and-match what your new
+thread/process should share and what it shouldn’t. It let’s you create
+something that has its own process id, but is a thread for all other intents
+and purposes. Good luck.
+glibc does not provide a syscall wrapper for this, so you’ll have to be extra
+dedicated to use this.&lt;sup id=&quot;fnref:wrapper&quot;&gt;&lt;a href=&quot;#fn:wrapper&quot; class=&quot;footnote&quot;&gt;4&lt;/a&gt;&lt;/sup&gt;&lt;/p&gt;
+
+&lt;p&gt;Ultimately, things do not compose in a way that make it possible to locally
+reason about a program. Yes, if you hold fork and threads exactly right (for
+instance by managing all the threads, and having a way to signal them to go
+to a safe state, and then forking) you &lt;em&gt;can&lt;/em&gt; write a correct program. But that
+requires you to globally about your program, which only works if you control
+every bit of your program, and even then is very hard.&lt;/p&gt;
+
+&lt;h1 id=&quot;enosys&quot;&gt;ENOSYS&lt;/h1&gt;
+&lt;p&gt;Writing cross-platform software is hard. Most software is written for Linux,
+and if it happens to run on other Unices, that is a happy accident. For systems
+software, that is usually a lost cause, as it needs more powerful APIs than
+POSIX provides. So we’ll settle for Linux. Most of these APIs were introduced
+at some point, so you’d usually target Linux of some version or newer – this
+is a generally unavoidable thing to do. But even then Linux has compile-time
+configuration flags that will enable or disable some system calls, or some
+arguments to system calls. And some depend on the target architecture. It’s a
+bit like duck typing: you call it and hope it works.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;ENOSYS The membarrier() system call is not implemented by this
+      kernel.&lt;/p&gt;
+
+  &lt;p&gt;EINVAL cmd is invalid, or flags is nonzero, or the
+       MEMBARRIER_CMD_GLOBAL command is disabled because the
+       nohz_full CPU parameter has been set, or the
+       MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE and
+       MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE commands
+       are not implemented by the architecture.&lt;/p&gt;
+
+  &lt;p&gt;– &lt;a href=&quot;http://man7.org/linux/man-pages/man2/membarrier.2.html&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;man 2 membarrier&lt;/code&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Any software that uses one of those system calls is inherently unportable even
+between machines of the &lt;em&gt;same kernel version&lt;/em&gt;. You will notice this
+incompatibility at runtime, whenever you attempt to call that syscall.
+Some more sanity could be achieved if there was a way to check for this without
+actually calling the syscall. Then some static analysis could figure out which
+syscalls you use, and then generate a stanza to check whether they exist that
+you can run at first startup. Everything would be like &lt;code class=&quot;highlighter-rouge&quot;&gt;./configure&lt;/code&gt;. What’s
+not to love?&lt;/p&gt;
+
+&lt;h1 id=&quot;standards&quot;&gt;Standards&lt;/h1&gt;
+&lt;blockquote&gt;
+  &lt;p&gt;WE DO NOT BREAK USERSPACE!&lt;/p&gt;
+
+  &lt;p&gt;– Linus (2012)&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;C++ has &lt;a href=&quot;https://timsong-cpp.github.io/cppwp/n3337/&quot;&gt;The Standard&lt;/a&gt;, which, even
+being aspirational&lt;sup id=&quot;fnref:aspirational&quot;&gt;&lt;a href=&quot;#fn:aspirational&quot; class=&quot;footnote&quot;&gt;5&lt;/a&gt;&lt;/sup&gt; at times, gives people a way to abstractly
+reason about their programs. Unix has POSIX, but that is a very low
+common denominator. Linux-specific details have no standard whatsoever. In the
+end, the kernel behaviour is whatever is in the kernel source, and the
+kernel promises to not break userspace&lt;sup id=&quot;fnref:nobreak&quot;&gt;&lt;a href=&quot;#fn:nobreak&quot; class=&quot;footnote&quot;&gt;6&lt;/a&gt;&lt;/sup&gt;. For libc, it’s the wild west
+without any proper specification once you go beyond what’s specified in C and
+POSIX.&lt;/p&gt;
+
+&lt;p&gt;With the proliferation on non-Glibc based Linux systems (musl on Alpine Linux,
+Bionic on Android) this makes interoperability more painful than it has to be.
+But more than that: it makes system programming &lt;em&gt;very hard&lt;/em&gt;. It is often
+impossible to work in all situations client code could construct via creative
+use of the available syscalls. Ultimately, looking at kernel and userspace in
+isolation is not the right approach. In an ideal world, applications should not
+need to care about the kernel.&lt;/p&gt;
+
+&lt;h1 id=&quot;errno&quot;&gt;Errno&lt;/h1&gt;
+
+&lt;p&gt;Pop quiz again! How did I get this error?&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;./a.out 
+bash: ./a.out: No such file or directory&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;If you guessed that &lt;code class=&quot;highlighter-rouge&quot;&gt;a.out&lt;/code&gt; didn’t exist, that would be one way of getting this
+error. But in my case what does not exist is the linker library that is
+specified in the ELF file&lt;sup id=&quot;fnref:link-error&quot;&gt;&lt;a href=&quot;#fn:link-error&quot; class=&quot;footnote&quot;&gt;7&lt;/a&gt;&lt;/sup&gt;. That’s one of the joys of &lt;code class=&quot;highlighter-rouge&quot;&gt;errno&lt;/code&gt;:
+for more complicated operations like this, it is unclear what file the &lt;code class=&quot;highlighter-rouge&quot;&gt;ENOENT&lt;/code&gt;
+error refers to. Some of the socket errnos on the other hand are very specific.
+Other syscalls just give you &lt;code class=&quot;highlighter-rouge&quot;&gt;EINVAL&lt;/code&gt;, and you need to figure out what exactly
+is wrong. If all you get is a single integer, I don’t think there’s a way to
+really strike that balance, as you have to encode both what you want humans to
+see, but also what the calling code might deal with. For &lt;code class=&quot;highlighter-rouge&quot;&gt;EINVAL&lt;/code&gt;, a human
+would probably want to know which of the arguments was wrong, while the
+calling code can’t do anything with that information.&lt;/p&gt;
+
+&lt;h1 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h1&gt;
+&lt;p&gt;I could go on, but I think I’ll wrap it up here. People can only take so much.
+&lt;sup id=&quot;fnref:followup&quot;&gt;&lt;a href=&quot;#fn:followup&quot; class=&quot;footnote&quot;&gt;8&lt;/a&gt;&lt;/sup&gt;&lt;/p&gt;
+
+&lt;p&gt;Systems programming is exciting, and if you’ve read this far you’d probably be
+inclined to agree. I’ve shown some of the not-so-nice corners I’ve come across.
+Some are inevitable in an operating system of this size and age. But they also
+are a valuable lesson in system design. Generalising a bit&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;em&gt;Data should be machine-readable&lt;/em&gt;: otherwise, people will have to build ad-hoc
+parsers. Those will contain bugs.&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;APIs should allow to locally reason about code&lt;/em&gt;: it is impossible to reason
+about all your dependencies in big software systems. Apart from that, it is
+very hard to reason about large state spaces.&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;Errors matter:&lt;/em&gt; good error reporting gives a good developer experience.&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;Consistency matters:&lt;/em&gt; having too many knobs fragments your system.&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;Behaviour should be specified:&lt;/em&gt; This
+creates a contract between application programmers and operating system
+programmers. People will violate that contract, but no one knows what to
+expect if there isn’t any.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;But also, we have to work with what we’ve got. Even if we come up with robust
+APIs for client applications, there we always be the long-tail of weird
+legacy software that uses the old ones. &lt;code class=&quot;highlighter-rouge&quot;&gt;fork&lt;/code&gt; is here to stay, and so are
+threads. What we can do is meticulously document both the caveats that come
+with those, and the behaviour. For &lt;code class=&quot;highlighter-rouge&quot;&gt;/proc&lt;/code&gt; files, some EBNF definition can help
+both formalize the format, and be used to auto-generate parsers. The less
+we can base our engineering on guesswork, the better.&lt;/p&gt;
+
+&lt;h1 id=&quot;quiz-results&quot;&gt;EBNF results&lt;/h1&gt;
+&lt;ol&gt;
+  &lt;li&gt;Maybe.&lt;sup id=&quot;fnref:maybe&quot;&gt;&lt;a href=&quot;#fn:maybe&quot; class=&quot;footnote&quot;&gt;9&lt;/a&gt;&lt;/sup&gt;&lt;/li&gt;
+  &lt;li&gt;Tabs.&lt;sup id=&quot;fnref:status-tabs&quot;&gt;&lt;a href=&quot;#fn:status-tabs&quot; class=&quot;footnote&quot;&gt;10&lt;/a&gt;&lt;/sup&gt;&lt;/li&gt;
+  &lt;li&gt;Yes.&lt;/li&gt;
+  &lt;li&gt;No.&lt;/li&gt;
+  &lt;li&gt;Yes.&lt;/li&gt;
+  &lt;li&gt;No.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Of course, those were kind of trick questions. No one would ever have gotten
+the first one right (what kind of answer is that even?). And the last two don’t
+make any sense either, because they are both single values.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;#quiz&quot;&gt;Go back up&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;endnotes&quot;&gt;Endnotes&lt;/h1&gt;
+
+&lt;div class=&quot;footnotes&quot;&gt;
+  &lt;ol&gt;
+    &lt;li id=&quot;fn:2&quot;&gt;
+      &lt;p&gt;Or cheat, I’m a sign, not a cop. &lt;a href=&quot;#fnref:2&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:1&quot;&gt;
+      &lt;p&gt;&lt;a href=&quot;https://github.com/acg/psmisc/blob/master/src/killall.c&quot;&gt;GNU/Linux&lt;/a&gt;, &lt;a href=&quot;http://sources.freebsd.org/RELENG_7/src/usr.bin/killall/killall.c&quot;&gt;FreeBSD&lt;/a&gt;, or &lt;a href=&quot;https://github.com/apple-open-source/macos/blob/master/shell_cmds/killall/killall.c&quot;&gt;macOS&lt;/a&gt;. &lt;a href=&quot;#fnref:1&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:exhalation&quot;&gt;
+      &lt;p&gt;&lt;strong&gt;Spoilers for Ted Chiang’s story “Anxiety Is the Dizziness of
+          Freedom”&lt;/strong&gt;. It’s like the premise of that story. 
+          (Assuming single-threaded) fork brings forth a new
+          process that is the same, except for one int, which is used to
+          make a choice. All other differences derive from that. &lt;a href=&quot;#fnref:exhalation&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:wrapper&quot;&gt;
+      &lt;p&gt;I’m not a fan of syscalls without wrappers, as that encourages
+        people to use raw syscalls, which then constrains libc
+        implementors. clone is actually a good example: Bionic (Android’s
+        libc) has a cache for the TID of a thread. It needs to invalidate
+        that cache upon calls to fork / clone / etc. It can only do this
+        when people use the syscall wrapper. People don’t always. &lt;a href=&quot;#fnref:wrapper&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:aspirational&quot;&gt;
+      &lt;p&gt;Some of the more low-level details leave a lot to be desired.
+             Many things are impossible in a standards compliant way, or
+             are underspecified, so people end up doing what works in
+             practice. &lt;a href=&quot;#fnref:aspirational&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:nobreak&quot;&gt;
+      &lt;p&gt;This, of course, leads to the question of what constitutes a
+        feature, and what constitutes a bug. And what level of quality you
+        expect from user-space. For instance, adding a new line to a proc
+        file would break applications that do not properly look at key,
+        value pairs, but rather hard-code the line they expect the value
+        to be at. It’s generally accepted that writing code like this is
+        asking to be broken. &lt;a href=&quot;#fnref:nobreak&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:link-error&quot;&gt;
+      &lt;p&gt;This has actually happened to me before. But if you know where
+           to look (&lt;a href=&quot;http://man7.org/linux/man-pages/man2/execve.2.html&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;man execve&lt;/code&gt;&lt;/a&gt;),
+           it’s at least documented. &lt;a href=&quot;#fnref:link-error&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:followup&quot;&gt;
+      &lt;p&gt;I do have opinions on more things, including but not limited to:
+         &lt;code class=&quot;highlighter-rouge&quot;&gt;perf_event_open&lt;/code&gt;, signals, &lt;code class=&quot;highlighter-rouge&quot;&gt;sendmsg&lt;/code&gt;, session leaders,
+         controlling terminals, &lt;code class=&quot;highlighter-rouge&quot;&gt;SIGPIPE&lt;/code&gt;, … &lt;a href=&quot;#fnref:followup&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:maybe&quot;&gt;
+      &lt;p&gt;Depends on whether your kernel has &lt;a href=&quot;https://github.com/torvalds/linux/commit/f5b65348fd77839b50e79bc0a5e536832ea52d8d&quot;&gt;this commit&lt;/a&gt;. &lt;a href=&quot;#fnref:maybe&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:status-tabs&quot;&gt;
+      &lt;p&gt;The &lt;a href=&quot;http://man7.org/linux/man-pages/man5/proc.5.html&quot;&gt;manpage&lt;/a&gt; uses spaces. &lt;a href=&quot;#fnref:status-tabs&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;
+</description>
+        <pubDate>Sun, 19 Apr 2020 17:30:00 +0200</pubDate>
+        <link>http:/bitsrc.org/2020/04/19/linux-the-good-the-bad-and-the-ugly.html</link>
+        <guid isPermaLink="true">http:/bitsrc.org/2020/04/19/linux-the-good-the-bad-and-the-ugly.html</guid>
+        
+        
+      </item>
     
       <item>
         <title>Automatic Org-Mode</title>
@@ -198,8 +597,8 @@ grown enough for the overhead in taking notes to pay dividends.&lt;/p&gt;
 &lt;/div&gt;
 </description>
         <pubDate>Thu, 16 Apr 2020 00:40:00 +0200</pubDate>
-        <link>http://bitsrc.org//2020/04/16/organizing-notetaking.html</link>
-        <guid isPermaLink="true">http://bitsrc.org//2020/04/16/organizing-notetaking.html</guid>
+        <link>http:/bitsrc.org/2020/04/16/organizing-notetaking.html</link>
+        <guid isPermaLink="true">http:/bitsrc.org/2020/04/16/organizing-notetaking.html</guid>
         
         
       </item>
@@ -477,8 +876,8 @@ grown enough for the overhead in taking notes to pay dividends.&lt;/p&gt;
 &lt;p&gt;If you have made it this far, it is probably also worth noting that the Z3 SMT solver has a &lt;a href=&quot;https://rise4fun.com/z3/tutorialcontent/sequences#h23&quot;&gt;Regex Theory&lt;/a&gt;. The last time I’ve played with it it was giving obviously incorrect answers, but that seems to have been rectified since. The nice thing about &lt;code class=&quot;highlighter-rouge&quot;&gt;regexp/syntax&lt;/code&gt; is that it uses the same library your application uses if you write it in Golang, and can be used in programs with more predictable performance and fewer dependencies than Z3.&lt;/p&gt;
 </description>
         <pubDate>Thu, 01 Mar 2018 01:00:00 +0100</pubDate>
-        <link>http://bitsrc.org//programming/2018/03/01/golang-regexp.html</link>
-        <guid isPermaLink="true">http://bitsrc.org//programming/2018/03/01/golang-regexp.html</guid>
+        <link>http:/bitsrc.org/programming/2018/03/01/golang-regexp.html</link>
+        <guid isPermaLink="true">http:/bitsrc.org/programming/2018/03/01/golang-regexp.html</guid>
         
         
         <category>programming</category>
@@ -528,8 +927,8 @@ grown enough for the overhead in taking notes to pay dividends.&lt;/p&gt;
 &lt;p&gt;The rest of the argument goes on in similar fashion, incorrectly combining concepts of theoretical computer science with implementations, citing how other virtual machines manage to be more general purpose, and so on, and so forth; the latter of which, of course, is true – but invariantly true for CPython 2 and CPython 3.&lt;/p&gt;
 </description>
         <pubDate>Wed, 23 Nov 2016 23:40:00 +0100</pubDate>
-        <link>http://bitsrc.org//computer-science/2016/11/23/someone-is-wrong-on-the-internet.html</link>
-        <guid isPermaLink="true">http://bitsrc.org//computer-science/2016/11/23/someone-is-wrong-on-the-internet.html</guid>
+        <link>http:/bitsrc.org/computer-science/2016/11/23/someone-is-wrong-on-the-internet.html</link>
+        <guid isPermaLink="true">http:/bitsrc.org/computer-science/2016/11/23/someone-is-wrong-on-the-internet.html</guid>
         
         
         <category>computer-science</category>
@@ -569,17 +968,17 @@ expression will be evaluating using that. So when you read &lt;code class=&quot;
 is used of the left hand side does not implement the operator, that is wrong. For instance,&lt;/p&gt;
 
 &lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;n&quot;&gt;In&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;18&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Foo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;     &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;__add__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;         &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Foo &quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;         
+    &lt;span class=&quot;p&quot;&gt;...:&lt;/span&gt;     &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;__add__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...:&lt;/span&gt;         &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Foo &quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...:&lt;/span&gt;         
 
 &lt;span class=&quot;n&quot;&gt;In&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;19&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Qux&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Foo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;     &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;__radd__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;         &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Qux &quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;         
+    &lt;span class=&quot;p&quot;&gt;...:&lt;/span&gt;     &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;__radd__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...:&lt;/span&gt;         &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Qux &quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...:&lt;/span&gt;         
 
 &lt;span class=&quot;n&quot;&gt;In&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;20&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Foo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x112f9f750&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Foo&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x112f7e510&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x112f9f750&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Foo&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x112f7e510&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 &lt;p&gt;This behaviour was what I was aiming to exploit by making &lt;code class=&quot;highlighter-rouge&quot;&gt;ExprAnd&lt;/code&gt; (for instance) implement
 both &lt;code class=&quot;highlighter-rouge&quot;&gt;__and__&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;__rand__&lt;/code&gt; and make Python use the most specific implementation. Sadly, it
@@ -587,10 +986,10 @@ does not work this way. If you now introduce a third class that inherits from Fo
 implement either of the methods itself, the base class’ will be used, for instance&lt;/p&gt;
 
 &lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;n&quot;&gt;In&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;21&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Bar&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Foo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;     &lt;span class=&quot;k&quot;&gt;pass&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; 
+    &lt;span class=&quot;p&quot;&gt;...:&lt;/span&gt;     &lt;span class=&quot;k&quot;&gt;pass&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...:&lt;/span&gt; 
 &lt;span class=&quot;n&quot;&gt;In&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;22&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Bar&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Foo&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Bar&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x112f80890&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x112f93a90&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;span class=&quot;n&quot;&gt;Foo&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Bar&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x112f80890&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x112f93a90&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 &lt;p&gt;The semantics of Python operator overloading will &lt;em&gt;only&lt;/em&gt; prefer the &lt;code class=&quot;highlighter-rouge&quot;&gt;__rand__&lt;/code&gt; method of the
 right hand side if it is an object of a subclass of the &lt;em&gt;type of the right hand side object&lt;/em&gt;.
@@ -622,8 +1021,8 @@ an unbound method object by using &lt;code class=&quot;highlighter-rouge&quot;&g
 &lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;inspect&lt;/span&gt;
 
 &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;fn_mro&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cls&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;mro&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inspect&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getmro&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cls&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;getattr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;im_func&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mro&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;hasattr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)]&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+    &lt;span class=&quot;n&quot;&gt;mro&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inspect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getmro&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cls&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;getattr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;im_func&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mro&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;hasattr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)]&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 &lt;p&gt;This can then be used to implement the logic as described above as a decorator that wraps
 a method. Note that we have to compare whether the left and right side operator is actually the
@@ -631,14 +1030,14 @@ same to prevent an infinite loop.&lt;/p&gt;
 
 &lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;most_specific&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
     &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;other&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__name__&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;self_fn&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;getattr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;im_func&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;other_fn&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;getattr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;other&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;im_func&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__name__&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;self_fn&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;getattr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;im_func&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;other_fn&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;getattr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;other&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;im_func&lt;/span&gt;
         &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;self_fn&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;other_fn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
             &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;other&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;self_fn&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn_mro&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;other&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__class__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;self_fn&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn_mro&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;other&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__class__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
             &lt;span class=&quot;c1&quot;&gt;# We did not inherit this from something in other's MRO.
-&lt;/span&gt;            &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;other_fn&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn_mro&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__class__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+&lt;/span&gt;            &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;other_fn&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn_mro&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__class__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
                 &lt;span class=&quot;c1&quot;&gt;# They didn't either. PANIC!
 &lt;/span&gt;                &lt;span class=&quot;k&quot;&gt;raise&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;TypeError&lt;/span&gt;
             &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;other&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
@@ -654,28 +1053,28 @@ and uses the same operations on both sides).&lt;/p&gt;
     &lt;span class=&quot;o&quot;&gt;@&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;most_specific&lt;/span&gt;
     &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;__add__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
         &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Foo &quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;
-   &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;         
+   &lt;span class=&quot;p&quot;&gt;...:&lt;/span&gt;         
 
 &lt;span class=&quot;n&quot;&gt;In&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Qux&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Foo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
     &lt;span class=&quot;o&quot;&gt;@&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;most_specific&lt;/span&gt;
     &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;__add__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
         &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Qux &quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;
-   &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;         
+   &lt;span class=&quot;p&quot;&gt;...:&lt;/span&gt;         
 
 &lt;span class=&quot;n&quot;&gt;In&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Foo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x103103690&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Foo&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x103103f50&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x103103690&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Foo&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x103103f50&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
 
 &lt;span class=&quot;n&quot;&gt;In&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Bar&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Foo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
-   &lt;span class=&quot;o&quot;&gt;....&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;     &lt;span class=&quot;k&quot;&gt;pass&lt;/span&gt;
-   &lt;span class=&quot;o&quot;&gt;....&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; 
+   &lt;span class=&quot;p&quot;&gt;....:&lt;/span&gt;     &lt;span class=&quot;k&quot;&gt;pass&lt;/span&gt;
+   &lt;span class=&quot;p&quot;&gt;....:&lt;/span&gt; 
 
 &lt;span class=&quot;n&quot;&gt;In&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;11&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Bar&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x103103e50&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Bar&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x10310b050&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Qux&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x103103e50&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Bar&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x10310b050&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 </description>
         <pubDate>Fri, 14 Oct 2016 18:00:00 +0200</pubDate>
-        <link>http://bitsrc.org//python/2016/10/14/operator-overloading.html</link>
-        <guid isPermaLink="true">http://bitsrc.org//python/2016/10/14/operator-overloading.html</guid>
+        <link>http:/bitsrc.org/python/2016/10/14/operator-overloading.html</link>
+        <guid isPermaLink="true">http:/bitsrc.org/python/2016/10/14/operator-overloading.html</guid>
         
         
         <category>python</category>
@@ -695,8 +1094,8 @@ and uses the same operations on both sides).&lt;/p&gt;
 &lt;p&gt;This mirrors the distinction between classical and intuitionistic logic. In classical logic, there is a platonic idea of truth (and thus existence): it is legitimate to refer to an object that one has no procedure on how to produce, if one can infer it has to exist (whatever it is). Intuitionistic logic, however, is a lot stricter and requires there to be a procedure on how to produce the objects.&lt;/p&gt;
 </description>
         <pubDate>Sun, 25 Sep 2016 18:00:00 +0200</pubDate>
-        <link>http://bitsrc.org//logic/2016/09/25/completeness.html</link>
-        <guid isPermaLink="true">http://bitsrc.org//logic/2016/09/25/completeness.html</guid>
+        <link>http:/bitsrc.org/logic/2016/09/25/completeness.html</link>
+        <guid isPermaLink="true">http:/bitsrc.org/logic/2016/09/25/completeness.html</guid>
         
         
         <category>logic</category>
@@ -721,8 +1120,8 @@ and uses the same operations on both sides).&lt;/p&gt;
 
 </description>
         <pubDate>Sat, 03 Sep 2016 17:15:00 +0200</pubDate>
-        <link>http://bitsrc.org//apaw/2016/09/03/a-paper-a-week-keystroke-recognition-wifi.html</link>
-        <guid isPermaLink="true">http://bitsrc.org//apaw/2016/09/03/a-paper-a-week-keystroke-recognition-wifi.html</guid>
+        <link>http:/bitsrc.org/apaw/2016/09/03/a-paper-a-week-keystroke-recognition-wifi.html</link>
+        <guid isPermaLink="true">http:/bitsrc.org/apaw/2016/09/03/a-paper-a-week-keystroke-recognition-wifi.html</guid>
         
         
         <category>apaw</category>
@@ -742,8 +1141,8 @@ and uses the same operations on both sides).&lt;/p&gt;
 &lt;p&gt;Elaborating more (it was late yesterday): I/O can be “simulated” with appropriate encoding in the output, but that is one of the points: arithmetic is Turing-complete, so I can, for all Turing-computable functions, produce an integer that &lt;em&gt;somehow encodes&lt;/em&gt; its result. This is an extremely important theoretical construct in computation theory, but also useless in a practical context, because I want to write actual data into actual memory of an actual machine.&lt;/p&gt;
 </description>
         <pubDate>Sun, 28 Aug 2016 00:46:00 +0200</pubDate>
-        <link>http://bitsrc.org//theoretical-cs/2016/08/28/turing-complete.html</link>
-        <guid isPermaLink="true">http://bitsrc.org//theoretical-cs/2016/08/28/turing-complete.html</guid>
+        <link>http:/bitsrc.org/theoretical-cs/2016/08/28/turing-complete.html</link>
+        <guid isPermaLink="true">http:/bitsrc.org/theoretical-cs/2016/08/28/turing-complete.html</guid>
         
         
         <category>theoretical-cs</category>
@@ -770,8 +1169,8 @@ and uses the same operations on both sides).&lt;/p&gt;
 
 </description>
         <pubDate>Sun, 17 Apr 2016 01:10:00 +0200</pubDate>
-        <link>http://bitsrc.org//apaw/2016/04/17/a-paper-a-week-graphlab-framework-parallel-machine-learning.html</link>
-        <guid isPermaLink="true">http://bitsrc.org//apaw/2016/04/17/a-paper-a-week-graphlab-framework-parallel-machine-learning.html</guid>
+        <link>http:/bitsrc.org/apaw/2016/04/17/a-paper-a-week-graphlab-framework-parallel-machine-learning.html</link>
+        <guid isPermaLink="true">http:/bitsrc.org/apaw/2016/04/17/a-paper-a-week-graphlab-framework-parallel-machine-learning.html</guid>
         
         
         <category>apaw</category>
@@ -917,84 +1316,11 @@ sat&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 </description>
         <pubDate>Sun, 03 Apr 2016 23:40:00 +0200</pubDate>
-        <link>http://bitsrc.org//logic/2016/04/03/theorem-proving-logic-puzzles.html</link>
-        <guid isPermaLink="true">http://bitsrc.org//logic/2016/04/03/theorem-proving-logic-puzzles.html</guid>
+        <link>http:/bitsrc.org/logic/2016/04/03/theorem-proving-logic-puzzles.html</link>
+        <guid isPermaLink="true">http:/bitsrc.org/logic/2016/04/03/theorem-proving-logic-puzzles.html</guid>
         
         
         <category>logic</category>
-        
-      </item>
-    
-      <item>
-        <title>Theorem Proving in Haskell</title>
-        <description>&lt;p&gt;For some reason that is not completely clear to me either, I decided to go about and implement the &lt;a href=&quot;https://en.wikipedia.org/wiki/Sequent_calculus&quot; title=&quot;Wikipedia: Sequent Calculus&quot;&gt;sequent calculus&lt;/a&gt; technique for theorem proving this weekend. Because that alone would be a rather dull exercise, I decided to do it in a language I do not know very well. I first thought about trying to implement it in OCaml, but then decided to go with Haskell because there I at least know some basics.&lt;/p&gt;
-
-&lt;p&gt;Before going into the implementation, it is probably worth spending a few words on the sequent calculus. The basic construct of the sequent calculus is a sequent, which looks like this: \( A, B, \ldots \vdash C \). This is the assertion that, from the set of assumptions \( A, B, \ldots \), we can prove \( C \). The sequent calculus consists of rules that allow to simplify the sequents in a way that the simplified sequents are valid iff the original one is. These rules can be repeatedly applied until only atoms exist in the sequent, at which point it is obvious whether it is valid or not (e.g. \( A \vdash A \) is obviously correct, while \(A \vdash B \) is not, with \( A \) and \( B \) being logical atoms).&lt;/p&gt;
-
-&lt;p&gt;One detail I have omitted so far is that I initially wanted to write a prover that works for intuitionistic instead of classical logic. The difference between the two logics is that, intuitionistic logic is stricter than classic logic in that it requires proofs to be constructive. This means that the proofs can be used to construct an object that satisfies the assertion. For instance, \( P = NP \lor P \ne NP \) is obviously true in classical logic, but intuitionistically one cannot prove this without knowing which of the two sides hold. If you are only here for the Haskell, it is probably not important that you completely understand this.&lt;/p&gt;
-
-&lt;p&gt;My initial attempt (I am very inexperienced in Haskell) was to define two functions to encode the proof with the &lt;em&gt;first operation&lt;/em&gt; being on left or the right side of the sequent. It would then call the respective other function on the simplified sequents. At this point I only wanted to encode intuitionistic proofs, so I had the left hand side of the proof as a list of expressions, and the right hand side as a single expression. I had the constructor Nil, only to be used on the right side, to express that it is empty. &lt;code class=&quot;highlighter-rouge&quot;&gt;proveLeft&lt;/code&gt; tried to apply a rule to the first expression in the list.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-haskell&quot; data-lang=&quot;haskell&quot;&gt;&lt;span class=&quot;kr&quot;&gt;data&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Expr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Implication&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Expr&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Expr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Var&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Neg&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Expr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Nil&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;deriving&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Eq&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Show&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;kr&quot;&gt;data&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Expr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Expr&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;deriving&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Eq&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Show&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;proveLeft&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;proveRight&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;I ran into all sorts of problems, especially with the negation operator on the left side, which can only be applied when the right hand side is empty. Atoms had to be explicitly skipped by putting them to the end of the list. Because of this it was hard to figure out when to terminate, or, as with intuitionistic logic one has the drop the right hand side if the proof is “stuck”, when to do that.&lt;/p&gt;
-
-&lt;p&gt;I tried to make this work for a bit, but then realized if I ever got it to work, it will be extremely brittle and probably broken in one corner case or another. I then tried attacking the problem in smaller parts – the first one of which was transforming a sequent into simpler sequents.  I also thought always using the first expression in the list as the one to operate on was not helpful, so I came up with the following functions (with rather poor names). I also decided to do classical logic first – in a sense, it is simpler because the left and the right hand side are both sets of expressions.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-haskell&quot; data-lang=&quot;haskell&quot;&gt;&lt;span class=&quot;n&quot;&gt;expandLeft&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Expr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;expandRight&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Expr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;The return value is &lt;code class=&quot;highlighter-rouge&quot;&gt;Maybe [Sequent]&lt;/code&gt; so the function can return &lt;code class=&quot;highlighter-rouge&quot;&gt;Nothing&lt;/code&gt; if the &lt;code class=&quot;highlighter-rouge&quot;&gt;Expr&lt;/code&gt; cannot be operated on, or &lt;code class=&quot;highlighter-rouge&quot;&gt;Just [Sequent]&lt;/code&gt; if it can be. For optimization purposes I decided to replace the &lt;code class=&quot;highlighter-rouge&quot;&gt;[Expr]&lt;/code&gt; from before with a custom type containing three &lt;code class=&quot;highlighter-rouge&quot;&gt;[Expr]&lt;/code&gt; – one for atoms (we need not bother trying to apply rules to them), one for negation (for classical logic, this is not needed, but later for intuitionistic we will want to skip those if there is something on the right hand side), and other composite expressions that we can always apply rules to. This is not strictly needed because of the &lt;code class=&quot;highlighter-rouge&quot;&gt;Maybe [Sequent]&lt;/code&gt;, but it felt a bit wasteful to call a function that only returns &lt;code class=&quot;highlighter-rouge&quot;&gt;Nothing&lt;/code&gt; for every atom – would be interesting to do profiling on this.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-haskell&quot; data-lang=&quot;haskell&quot;&gt;&lt;span class=&quot;kr&quot;&gt;data&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Expr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Implication&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Expr&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Expr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Var&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Neg&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Expr&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;deriving&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Eq&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Show&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;kr&quot;&gt;data&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ExprSet&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ExprSet&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Expr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Expr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Expr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;deriving&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Eq&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Show&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;kr&quot;&gt;data&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ExprSet&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ExprSet&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;deriving&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Eq&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Show&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;The rest of the program involved a lot of using functions from &lt;code class=&quot;highlighter-rouge&quot;&gt;Data.Maybe&lt;/code&gt; to put the pieces together.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-haskell&quot; data-lang=&quot;haskell&quot;&gt;&lt;span class=&quot;n&quot;&gt;stepRight&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;stepRight&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;@&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lhs&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;rhs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;listToMaybe&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;$&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mapMaybe&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;expandRight&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getComposite&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;rhs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getNeg&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;rhs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;This runs &lt;code class=&quot;highlighter-rouge&quot;&gt;expandRight&lt;/code&gt; for all expressions on the right hand side, and returns the result first one of those that returns a &lt;code class=&quot;highlighter-rouge&quot;&gt;Just [Sequent]&lt;/code&gt;, or &lt;code class=&quot;highlighter-rouge&quot;&gt;Nothing&lt;/code&gt; if all of them return &lt;code class=&quot;highlighter-rouge&quot;&gt;Nothing&lt;/code&gt;. The right hand side is the same idea.&lt;/p&gt;
-
-&lt;p&gt;Then, the same idea can be used to apply steps on the left side until there are none more to be taken, then on the right hand side. LK stands for the classical version of the sequent calculus there.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-haskell&quot; data-lang=&quot;haskell&quot;&gt;&lt;span class=&quot;n&quot;&gt;stepLK&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;stepLK&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;listToMaybe&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;$&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;catMaybes&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stepLeft&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stepRight&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Even though I start with a single sequent, a step on a sequent can result in more than one. We need to apply &lt;code class=&quot;highlighter-rouge&quot;&gt;stepLK&lt;/code&gt; to all sequents in a list until it returns &lt;code class=&quot;highlighter-rouge&quot;&gt;Nothing&lt;/code&gt; for all of them. To do so a function &lt;code class=&quot;highlighter-rouge&quot;&gt;steps&lt;/code&gt; is  defined that returns either the derived list of Sequents after taking a step, or &lt;code class=&quot;highlighter-rouge&quot;&gt;Nothing&lt;/code&gt; if no steps can be taken any more.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-haskell&quot; data-lang=&quot;haskell&quot;&gt;&lt;span class=&quot;n&quot;&gt;getFirst&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;getFirst&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Just&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;_&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;getFirst&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kr&quot;&gt;_&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;steps&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;steps&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;xs&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;all&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;isNothing&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fst&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nextIter&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;then&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Nothing&lt;/span&gt;
-                                             &lt;span class=&quot;kr&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Just&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;$&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;concat&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;$&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;getFirst&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nextIter&lt;/span&gt; 
-        &lt;span class=&quot;kr&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nextIter&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stepLK&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]))&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;xs&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Then, to bring this to the logical conclusion, this function is applied until it returns &lt;code class=&quot;highlighter-rouge&quot;&gt;Nothing&lt;/code&gt;, and then it is checked whether all sequents in the call before that were axioms.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-haskell&quot; data-lang=&quot;haskell&quot;&gt;&lt;span class=&quot;n&quot;&gt;iterToNothing&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;iterToNothing&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;of&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Nothing&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;
-                                  &lt;span class=&quot;kt&quot;&gt;Just&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iterToNothing&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;solve&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Sequent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;solve&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;all&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;isAxiom&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;$&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iterToNothing&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;steps&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Turning this into a solver for LJ (the intuitionistic version of the calculus) is fairly easy at this point. The rules operating on the negation on the left side have to be guarded by a condition that the right hand side be empty, and the &lt;code class=&quot;highlighter-rouge&quot;&gt;stepsLK&lt;/code&gt; function has to be changed to drop the right hand side if there are no more steps for a sequent but it is not an axiom yet. In the implementation this leads to two functions being different between the LK and LJ cases, but I have yet to find a way to properly select which of the two to use at runtime: plumbing the functions through the computation by passing them as arguments does not seem the nicest way.&lt;/p&gt;
-
-</description>
-        <pubDate>Wed, 02 Dec 2015 01:00:00 +0100</pubDate>
-        <link>http://bitsrc.org//programming/2015/12/02/theorem-proving-in-haskell.html</link>
-        <guid isPermaLink="true">http://bitsrc.org//programming/2015/12/02/theorem-proving-in-haskell.html</guid>
-        
-        
-        <category>programming</category>
         
       </item>
     

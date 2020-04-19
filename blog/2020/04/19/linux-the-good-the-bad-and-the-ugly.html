@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Linux: The good, the bad and the ugly</title>
+  <meta name="description" content="I’ve been working on system-level software for Linux for some time now,which is a job that makes you much more likely to encounter the odd cornerof an operat...">
+
+  <link rel="stylesheet" href="/blog/css/main.css">
+  <link rel="canonical" href="http:/bitsrc.org/blog/2020/04/19/linux-the-good-the-bad-and-the-ugly.html">
+  <link rel="alternate" type="application/rss+xml" title="Strings over Σ" href="http:/bitsrc.org/blog/feed.xml" />
+<script type="text/javascript"
+    src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    showProcessingMessages: false,
+    messageStyle: 'none',
+    // show equation numbers
+    TeX: {
+      equationNumbers: {
+        autoNumber: "AMS"
+      }
+    },
+    'HTML-CSS': {
+      imageFont: null
+    }
+  });
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-60512974-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/blog/">Strings over Σ</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="/blog/about/">About</a>
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">Linux: The good, the bad and the ugly</h1>
+    <p class="post-meta">Apr 19, 2020</p>
+  </header>
+
+  <article class="post-content">
+    <p>I’ve been working on system-level software for Linux for some time now,
+which is a job that makes you much more likely to encounter the odd corner
+of an operating system than higher level development. For all practical
+purposes, Linux has succeeded as an operating system. Billions of web queries
+are being served from Linux servers every day, and it’s running on <a href="https://twitter.com/Android/status/1125822326183014401">billions</a> of
+mobile devices.</p>
+
+<p>But of course an operating system ultimately rooted in the 70s will have
+accumulated its fair share of legacy. Of course, not all problems are rooted
+in this: we still are perfectly capable of making new and exciting mistakes.</p>
+
+<h1 id="everything-ish-is-a-file-ish">Everything-ish is a file-ish</h1>
+<p>File descriptors are one of the most poorly named concepts, as they don’t
+necessarily represent (or describe) a file. Think of them more as pointers to
+resources in the kernel (which are conveniently referenced-counted), and things
+will start making more sense. You can use file descriptors to refer to many
+things, among them</p>
+
+<ul>
+  <li><a href="http://man7.org/linux/man-pages/man2/open.2.html">Files and Directories</a></li>
+  <li><a href="http://man7.org/linux/man-pages/man2/socket.2.html">Sockets</a></li>
+  <li><a href="http://man7.org/linux/man-pages/man2/pipe.2.html">Pipes</a></li>
+  <li><a href="http://man7.org/linux/man-pages/man2/timerfd_create.2.html">Timers</a></li>
+  <li><a href="http://man7.org/linux/man-pages/man2/signalfd.2.html">Incoming signals</a></li>
+  <li><a href="http://man7.org/linux/man-pages/man2/memfd_create.2.html">Anonymous memory</a></li>
+  <li><a href="http://man7.org/linux/man-pages/man2/eventfd.2.html">Events</a></li>
+  <li><a href="http://man7.org/linux/man-pages/man2/pidfd_open.2.html">Processes</a></li>
+  <li><a href="http://man7.org/linux/man-pages/man2/perf_event_open.2.html">Performance counters</a></li>
+  <li>Sadly, <a href="https://lwn.net/Articles/280960/">not locks</a></li>
+</ul>
+
+<p>Many of these things are not files in the either the sense that you can use
+them to store data, nor in the sense that they have a path on the file system.
+That all of these things are file descriptors is actually kind of cool: you can
+wait on many of these things, and asynchronous I/O APIs like <code class="highlighter-rouge">epoll</code> operate on
+file descriptors. This means that you can wait for data to become available on
+some socket <em>or</em> for some timer to run out <em>or</em> for a POSIX signal to arrive.
+No threading nonsense involved.</p>
+
+<p>On the other hand, a file descriptor to an application developer is just an
+integer. From an API perspective, now you end up with all of these things just
+being integers, and all being called fd, and many functions operating on fds,
+all of them working on a different subset of them. For instance, what would it
+even mean to write to a timerfd? This gets even worse when talking about errors.
+Manpages will have a list of possible errnos, but with file descriptor
+functions, usually all bets are off (short of delving into the kernel source)
+of trying to understand which ones can happen for your particular case. If
+your FD is special enough (say, some <code class="highlighter-rouge">/sys</code> file), you might even get errors
+that are <em>not</em> listed on the manpage.</p>
+
+<h1 id="quiz">“Everything is bytes\n\0”</h1>
+<p>Linux has around 300 system calls that you can use in your programs. This is
+sometimes cited as an impressively small API surface for a kernel,
+but that’s only telling half of the truth. There are many, many files in the
+<code class="highlighter-rouge">/proc</code> and <code class="highlighter-rouge">/sys</code> virtual file-systems that you can read from to get
+information or write to to change some behaviour. You can use them to read a
+process’ command line, to get its CPU use, its memory use, to get or change the
+maximum number of file-descriptors open, set counters on breakpoints, etc.
+Long story short, you can do many things. If you are writing systems software,
+you will be using those quite a lot.</p>
+
+<p>Most of those produce (or consume) information in ASCII, so if you want to use
+them programatically, you’ll have to parse the output. If you want to do that,
+it helps to know the format well.</p>
+
+<p>Pop quiz! No cheating.<sup id="fnref:2"><a href="#fn:2" class="footnote">1</a></sup></p>
+
+<ol>
+  <li>Does <code class="highlighter-rouge">/proc/&lt;pid&gt;/cmdline</code> have a trailing NUL-byte?</li>
+  <li>Does <code class="highlighter-rouge">/proc/&lt;pid&gt;/status</code> use tabs or spaces?</li>
+  <li>Does <code class="highlighter-rouge">/proc/&lt;pid&gt;/status</code> have a trailing newline?</li>
+  <li>NUL-byte?</li>
+  <li>Does <code class="highlighter-rouge">/proc/&lt;pid&gt;/oom_score</code> (a single value) have a trailing newline?</li>
+  <li>Does <code class="highlighter-rouge">/proc/&lt;pid&gt;/wchan</code> (a single value) have a trailing newline?</li>
+</ol>
+
+<p><a href="#quiz-results">Go to results</a>.</p>
+
+<p>So that was fun! If you haven’t looked at the results yet, please do take a
+second, even if you haven’t tried to answer yourself. There are multiple problems
+highlighted: most of <code class="highlighter-rouge">/proc</code> files are ad-hoc text formats (at least <em>most</em> of
+them do use newlines, it appears). Another one is that they are extremely poorly
+documented. A quick look at <a href="http://man7.org/linux/man-pages/man5/proc.5.html"><code class="highlighter-rouge">man 5 proc</code></a> would not go far in answering
+the questions in this quiz. You have to look at the files and work out the
+format from this. Of course, if you read this from a program, the kernel
+rendering text only for your program to parse it back again is wasteful in both
+computer and human resources. This being ad-hoc formats, one has to write a
+parser for each and every one of them.</p>
+
+<p>For some high-volume formats like ftrace, parsing from the text format is
+actually prohibitively expensive. This is why there is also a (undocumented)
+de-facto binary interface. With some configuration in, yes, you guessed it,
+a custom text format.</p>
+
+<h1 id="manything-is-a-race">Manything is a race</h1>
+<p>How would you implement <code class="highlighter-rouge">killall</code>? Conceptually, it’s fairly simple: you go
+through all processes, and kill the ones matching. Having some function
+<code class="highlighter-rouge">matches</code> to determine whether a PID matches the given specification, you’d
+write something along the lines of this:</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">pid_t</span><span class="o">&gt;</span> <span class="n">pids</span> <span class="o">=</span> <span class="n">get_all_pids</span><span class="p">();</span>
+<span class="k">for</span> <span class="p">(</span><span class="n">pid_t</span> <span class="n">pid</span> <span class="o">:</span> <span class="n">pids</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">matches</span><span class="p">(</span><span class="n">pid</span><span class="p">))</span> <span class="p">{</span>
+    <span class="n">kill</span><span class="p">(</span><span class="n">pid</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Cool. That seems to work (given some imagination). But if you are a diligent
+programmer, maybe having done some multi-threaded programming, something might
+look a bit off. All we pass around is an integer <code class="highlighter-rouge">pid</code>, so how do we know it
+refers to the same process in <code class="highlighter-rouge">match(pid)</code> and in <code class="highlighter-rouge">kill(pid)</code>? Processes can
+go away, and their PIDs will be re-used. In that case, we could potentially
+match PID 1234 when it is <code class="highlighter-rouge">retriable_nonsense_job</code>, but kill
+<code class="highlighter-rouge">super_important_process</code> later.</p>
+
+<p>So how do you write a <em>correct</em> <code class="highlighter-rouge">killall</code>? Turns out, on Linux it’s impossible
+before 5.1, on other Unices it might still be. All the major operating systems’
+implementations are not fundamentally different to the pseudocode above<sup id="fnref:1"><a href="#fn:1" class="footnote">2</a></sup>.
+On Linux 5.1, you can <code class="highlighter-rouge">opendir</code> <code class="highlighter-rouge">/proc/\&lt;pid\&gt;</code>, then use that as a handle to both
+read the command line (and other attributes), and <code class="highlighter-rouge">pidfd_send_signal</code>.</p>
+
+<p>This might remind you of some code you might have written. Something like</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">pid_t</span> <span class="n">pid</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">pid</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">oh</span> <span class="n">no</span><span class="p">;</span>
+  <span class="n">abort</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">pid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">something</span> <span class="n">in</span> <span class="n">child</span><span class="p">;</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">status</span><span class="p">;</span>
+  <span class="n">YOUR_EINTR_WRAPPER</span><span class="p">(</span><span class="n">waitpid</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">status</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Could PID-reuse mean you could end up waiting on something else? Something
+that might never exit, in the worst case? Thankfully, not.
+The child process will actually stick around as a <em>zombie</em>, even
+if it is finished, until you waitpid for it. As you can only wait on your
+children, no race can occur like this. Of course, the other thing that can
+happen is that the parent dies before it has chance to waitpid. In that case,
+the problem is also averted through some gymnastics: the child process gets
+<em>orphaned</em> and reparented to <code class="highlighter-rouge">init</code>, which will wait on it to prevent the
+zombie from sticking around. <em>Phew</em>.</p>
+
+<h1 id="for-forks-sake">For fork’s sake</h1>
+
+<p><a href="http://man7.org/linux/man-pages/man2/fork.2.html"><code class="highlighter-rouge">fork</code></a> is one of the
+fundamental building blocks of Unix systems. It goes way back to the old days of
+Unix and is used to create a new process. That process is a copy of the
+original one. From an API perspective, to the child it will appear that <code class="highlighter-rouge">fork</code>
+returned 0, while to the parent the PID of the child. Kind of magical if you
+think of it.<sup id="fnref:exhalation"><a href="#fn:exhalation" class="footnote">3</a></sup></p>
+
+<p>Memory does not actually get copied just yet, but only when either the parent
+or the child attempt to change it (this is called copy-on-write). File
+descriptors will get duplicated (convenient that they are already referenced
+counted). Problems already start popping up here: you need to be sure to close
+the ones you don’t actually need in the child, or you might hold on to them
+forever. This gets even worse if you <code class="highlighter-rouge">exec</code> another program, which (in general)
+won’t know or care about your file descriptors. To solve the latter problem,
+<code class="highlighter-rouge">O_CLOEXEC</code> (close on exec) was invented. Of course that’s not the default, so
+people often manually iterate over all FDs (via <code class="highlighter-rouge">/proc</code>), and then close them
+all.</p>
+
+<p>But then came threads, and we went from bad to worse. Because it’s unclear what
+to do with all these other threads (it’s not like they have a call to fork where
+they could take different branches), they just get terminated in whatever state
+they are when fork gets called. Remember we copied the whole memory state? That
+might contain a lock (say, in <code class="highlighter-rouge">malloc</code>) that was being held by one of those
+threads. The next time anything calls <code class="highlighter-rouge">malloc</code>, it will be stuck forever,
+waiting on the now terminated thread. Your child process is toast. Your program
+might even be single threaded, but some library you pulled might have created a
+thread, that might have happened to do an allocation when you called fork.</p>
+
+<p>They came up with <code class="highlighter-rouge">pthread_atfork</code> hooks that get called before the fork, and
+then afterwards in the parent on the child. That was intended to allow library
+developers to make their libraries safe in the presence of forks, but even the
+manpage concedes that this “is generally too difficult to be practicable.”</p>
+
+<p>But there’s more! Even though the memory isn’t actually copied, forking is
+still an expensive operation for the kernel. It has to copy all sorts of
+structures like page tables and so on. That’s a waste if all we are going
+to do is exec a new program, replacing the page tables once again. So
+they came up with <code class="highlighter-rouge">vfork</code>, which is like fork except that you pinkie-promise
+not to call anything except <code class="highlighter-rouge">exec</code> or <code class="highlighter-rouge">_exit</code> afterwards. This raises
+questions about the API design: if all you are allowed to call is <code class="highlighter-rouge">exec</code>, why
+not create a function that is the combination of vfork an exec? With all the
+different exec variations I can see how that would be slightly painful, but at
+least not something that makes it super easy to shoot your foot. In fact,
+<code class="highlighter-rouge">posix_spawn</code> is exactly that and was standardised in 2001.</p>
+
+<p>But going further down the route of forking, modern Linux also has something
+else up its sleeve: <a href="http://man7.org/linux/man-pages/man2/clone.2.html"><code class="highlighter-rouge">clone</code></a>. That let’s you mix-and-match what your new
+thread/process should share and what it shouldn’t. It let’s you create
+something that has its own process id, but is a thread for all other intents
+and purposes. Good luck.
+glibc does not provide a syscall wrapper for this, so you’ll have to be extra
+dedicated to use this.<sup id="fnref:wrapper"><a href="#fn:wrapper" class="footnote">4</a></sup></p>
+
+<p>Ultimately, things do not compose in a way that make it possible to locally
+reason about a program. Yes, if you hold fork and threads exactly right (for
+instance by managing all the threads, and having a way to signal them to go
+to a safe state, and then forking) you <em>can</em> write a correct program. But that
+requires you to globally about your program, which only works if you control
+every bit of your program, and even then is very hard.</p>
+
+<h1 id="enosys">ENOSYS</h1>
+<p>Writing cross-platform software is hard. Most software is written for Linux,
+and if it happens to run on other Unices, that is a happy accident. For systems
+software, that is usually a lost cause, as it needs more powerful APIs than
+POSIX provides. So we’ll settle for Linux. Most of these APIs were introduced
+at some point, so you’d usually target Linux of some version or newer – this
+is a generally unavoidable thing to do. But even then Linux has compile-time
+configuration flags that will enable or disable some system calls, or some
+arguments to system calls. And some depend on the target architecture. It’s a
+bit like duck typing: you call it and hope it works.</p>
+
+<blockquote>
+  <p>ENOSYS The membarrier() system call is not implemented by this
+      kernel.</p>
+
+  <p>EINVAL cmd is invalid, or flags is nonzero, or the
+       MEMBARRIER_CMD_GLOBAL command is disabled because the
+       nohz_full CPU parameter has been set, or the
+       MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE and
+       MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE commands
+       are not implemented by the architecture.</p>
+
+  <p>– <a href="http://man7.org/linux/man-pages/man2/membarrier.2.html"><code class="highlighter-rouge">man 2 membarrier</code></a></p>
+</blockquote>
+
+<p>Any software that uses one of those system calls is inherently unportable even
+between machines of the <em>same kernel version</em>. You will notice this
+incompatibility at runtime, whenever you attempt to call that syscall.
+Some more sanity could be achieved if there was a way to check for this without
+actually calling the syscall. Then some static analysis could figure out which
+syscalls you use, and then generate a stanza to check whether they exist that
+you can run at first startup. Everything would be like <code class="highlighter-rouge">./configure</code>. What’s
+not to love?</p>
+
+<h1 id="standards">Standards</h1>
+<blockquote>
+  <p>WE DO NOT BREAK USERSPACE!</p>
+
+  <p>– Linus (2012)</p>
+</blockquote>
+
+<p>C++ has <a href="https://timsong-cpp.github.io/cppwp/n3337/">The Standard</a>, which, even
+being aspirational<sup id="fnref:aspirational"><a href="#fn:aspirational" class="footnote">5</a></sup> at times, gives people a way to abstractly
+reason about their programs. Unix has POSIX, but that is a very low
+common denominator. Linux-specific details have no standard whatsoever. In the
+end, the kernel behaviour is whatever is in the kernel source, and the
+kernel promises to not break userspace<sup id="fnref:nobreak"><a href="#fn:nobreak" class="footnote">6</a></sup>. For libc, it’s the wild west
+without any proper specification once you go beyond what’s specified in C and
+POSIX.</p>
+
+<p>With the proliferation on non-Glibc based Linux systems (musl on Alpine Linux,
+Bionic on Android) this makes interoperability more painful than it has to be.
+But more than that: it makes system programming <em>very hard</em>. It is often
+impossible to work in all situations client code could construct via creative
+use of the available syscalls. Ultimately, looking at kernel and userspace in
+isolation is not the right approach. In an ideal world, applications should not
+need to care about the kernel.</p>
+
+<h1 id="errno">Errno</h1>
+
+<p>Pop quiz again! How did I get this error?</p>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">$ </span>./a.out 
+bash: ./a.out: No such file or directory</code></pre></figure>
+
+<p>If you guessed that <code class="highlighter-rouge">a.out</code> didn’t exist, that would be one way of getting this
+error. But in my case what does not exist is the linker library that is
+specified in the ELF file<sup id="fnref:link-error"><a href="#fn:link-error" class="footnote">7</a></sup>. That’s one of the joys of <code class="highlighter-rouge">errno</code>:
+for more complicated operations like this, it is unclear what file the <code class="highlighter-rouge">ENOENT</code>
+error refers to. Some of the socket errnos on the other hand are very specific.
+Other syscalls just give you <code class="highlighter-rouge">EINVAL</code>, and you need to figure out what exactly
+is wrong. If all you get is a single integer, I don’t think there’s a way to
+really strike that balance, as you have to encode both what you want humans to
+see, but also what the calling code might deal with. For <code class="highlighter-rouge">EINVAL</code>, a human
+would probably want to know which of the arguments was wrong, while the
+calling code can’t do anything with that information.</p>
+
+<h1 id="conclusion">Conclusion</h1>
+<p>I could go on, but I think I’ll wrap it up here. People can only take so much.
+<sup id="fnref:followup"><a href="#fn:followup" class="footnote">8</a></sup></p>
+
+<p>Systems programming is exciting, and if you’ve read this far you’d probably be
+inclined to agree. I’ve shown some of the not-so-nice corners I’ve come across.
+Some are inevitable in an operating system of this size and age. But they also
+are a valuable lesson in system design. Generalising a bit</p>
+
+<ul>
+  <li><em>Data should be machine-readable</em>: otherwise, people will have to build ad-hoc
+parsers. Those will contain bugs.</li>
+  <li><em>APIs should allow to locally reason about code</em>: it is impossible to reason
+about all your dependencies in big software systems. Apart from that, it is
+very hard to reason about large state spaces.</li>
+  <li><em>Errors matter:</em> good error reporting gives a good developer experience.</li>
+  <li><em>Consistency matters:</em> having too many knobs fragments your system.</li>
+  <li><em>Behaviour should be specified:</em> This
+creates a contract between application programmers and operating system
+programmers. People will violate that contract, but no one knows what to
+expect if there isn’t any.</li>
+</ul>
+
+<p>But also, we have to work with what we’ve got. Even if we come up with robust
+APIs for client applications, there we always be the long-tail of weird
+legacy software that uses the old ones. <code class="highlighter-rouge">fork</code> is here to stay, and so are
+threads. What we can do is meticulously document both the caveats that come
+with those, and the behaviour. For <code class="highlighter-rouge">/proc</code> files, some EBNF definition can help
+both formalize the format, and be used to auto-generate parsers. The less
+we can base our engineering on guesswork, the better.</p>
+
+<h1 id="quiz-results">EBNF results</h1>
+<ol>
+  <li>Maybe.<sup id="fnref:maybe"><a href="#fn:maybe" class="footnote">9</a></sup></li>
+  <li>Tabs.<sup id="fnref:status-tabs"><a href="#fn:status-tabs" class="footnote">10</a></sup></li>
+  <li>Yes.</li>
+  <li>No.</li>
+  <li>Yes.</li>
+  <li>No.</li>
+</ol>
+
+<p>Of course, those were kind of trick questions. No one would ever have gotten
+the first one right (what kind of answer is that even?). And the last two don’t
+make any sense either, because they are both single values.</p>
+
+<p><a href="#quiz">Go back up</a></p>
+
+<h1 id="endnotes">Endnotes</h1>
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:2">
+      <p>Or cheat, I’m a sign, not a cop. <a href="#fnref:2" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:1">
+      <p><a href="https://github.com/acg/psmisc/blob/master/src/killall.c">GNU/Linux</a>, <a href="http://sources.freebsd.org/RELENG_7/src/usr.bin/killall/killall.c">FreeBSD</a>, or <a href="https://github.com/apple-open-source/macos/blob/master/shell_cmds/killall/killall.c">macOS</a>. <a href="#fnref:1" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:exhalation">
+      <p><strong>Spoilers for Ted Chiang’s story “Anxiety Is the Dizziness of
+          Freedom”</strong>. It’s like the premise of that story. 
+          (Assuming single-threaded) fork brings forth a new
+          process that is the same, except for one int, which is used to
+          make a choice. All other differences derive from that. <a href="#fnref:exhalation" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:wrapper">
+      <p>I’m not a fan of syscalls without wrappers, as that encourages
+        people to use raw syscalls, which then constrains libc
+        implementors. clone is actually a good example: Bionic (Android’s
+        libc) has a cache for the TID of a thread. It needs to invalidate
+        that cache upon calls to fork / clone / etc. It can only do this
+        when people use the syscall wrapper. People don’t always. <a href="#fnref:wrapper" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:aspirational">
+      <p>Some of the more low-level details leave a lot to be desired.
+             Many things are impossible in a standards compliant way, or
+             are underspecified, so people end up doing what works in
+             practice. <a href="#fnref:aspirational" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:nobreak">
+      <p>This, of course, leads to the question of what constitutes a
+        feature, and what constitutes a bug. And what level of quality you
+        expect from user-space. For instance, adding a new line to a proc
+        file would break applications that do not properly look at key,
+        value pairs, but rather hard-code the line they expect the value
+        to be at. It’s generally accepted that writing code like this is
+        asking to be broken. <a href="#fnref:nobreak" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:link-error">
+      <p>This has actually happened to me before. But if you know where
+           to look (<a href="http://man7.org/linux/man-pages/man2/execve.2.html"><code class="highlighter-rouge">man execve</code></a>),
+           it’s at least documented. <a href="#fnref:link-error" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:followup">
+      <p>I do have opinions on more things, including but not limited to:
+         <code class="highlighter-rouge">perf_event_open</code>, signals, <code class="highlighter-rouge">sendmsg</code>, session leaders,
+         controlling terminals, <code class="highlighter-rouge">SIGPIPE</code>, … <a href="#fnref:followup" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:maybe">
+      <p>Depends on whether your kernel has <a href="https://github.com/torvalds/linux/commit/f5b65348fd77839b50e79bc0a5e536832ea52d8d">this commit</a>. <a href="#fnref:maybe" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:status-tabs">
+      <p>The <a href="http://man7.org/linux/man-pages/man5/proc.5.html">manpage</a> uses spaces. <a href="#fnref:status-tabs" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </article>
+
+</div>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Strings over Σ</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col  footer-col-1">
+        <ul class="contact-list">
+          <li>Strings over Σ</li>
+          <li><a href="mailto:blog@bitsrc.org">blog@bitsrc.org</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/segfaulthunter">
+              <span class="icon  icon--github">
+                <svg viewBox="0 0 16 16">
+                  <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
+                </svg>
+              </span>
+
+              <span class="username">segfaulthunter</span>
+            </a>
+          </li>
+          
+
+          
+          <li>
+            <a href="https://twitter.com/segfaulthunter">
+              <span class="icon  icon--twitter">
+                <svg viewBox="0 0 16 16">
+                  <path fill="#828282" d="M15.969,3.058c-0.586,0.26-1.217,0.436-1.878,0.515c0.675-0.405,1.194-1.045,1.438-1.809
+                  c-0.632,0.375-1.332,0.647-2.076,0.793c-0.596-0.636-1.446-1.033-2.387-1.033c-1.806,0-3.27,1.464-3.27,3.27 c0,0.256,0.029,0.506,0.085,0.745C5.163,5.404,2.753,4.102,1.14,2.124C0.859,2.607,0.698,3.168,0.698,3.767 c0,1.134,0.577,2.135,1.455,2.722C1.616,6.472,1.112,6.325,0.671,6.08c0,0.014,0,0.027,0,0.041c0,1.584,1.127,2.906,2.623,3.206 C3.02,9.402,2.731,9.442,2.433,9.442c-0.211,0-0.416-0.021-0.615-0.059c0.416,1.299,1.624,2.245,3.055,2.271 c-1.119,0.877-2.529,1.4-4.061,1.4c-0.264,0-0.524-0.015-0.78-0.046c1.447,0.928,3.166,1.469,5.013,1.469 c6.015,0,9.304-4.983,9.304-9.304c0-0.142-0.003-0.283-0.009-0.423C14.976,4.29,15.531,3.714,15.969,3.058z"/>
+                </svg>
+              </span>
+
+              <span class="username">segfaulthunter</span>
+            </a>
+          </li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-3">
+        <p class="text">A blog about computer science, logic and programming. Occasionally other topics reasonably consistent with the rest.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
