@@ -6,8 +6,8 @@
 </description>
     <link>http:/bitsrc.org/blog/</link>
     <atom:link href="http:/bitsrc.org/blog/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Sun, 19 Apr 2020 17:36:49 +0200</pubDate>
-    <lastBuildDate>Sun, 19 Apr 2020 17:36:49 +0200</lastBuildDate>
+    <pubDate>Tue, 21 Apr 2020 00:21:48 +0200</pubDate>
+    <lastBuildDate>Tue, 21 Apr 2020 00:21:48 +0200</lastBuildDate>
     <generator>Jekyll v4.0.0</generator>
     
       <item>
@@ -216,8 +216,8 @@ dedicated to use this.&lt;sup id=&quot;fnref:wrapper&quot;&gt;&lt;a href=&quot;#
 reason about a program. Yes, if you hold fork and threads exactly right (for
 instance by managing all the threads, and having a way to signal them to go
 to a safe state, and then forking) you &lt;em&gt;can&lt;/em&gt; write a correct program. But that
-requires you to globally about your program, which only works if you control
-every bit of your program, and even then is very hard.&lt;/p&gt;
+requires you to reason globally about your program, which only works if you
+control every bit of your program, and even then is very hard.&lt;/p&gt;
 
 &lt;h1 id=&quot;enosys&quot;&gt;ENOSYS&lt;/h1&gt;
 &lt;p&gt;Writing cross-platform software is hard. Most software is written for Linux,
