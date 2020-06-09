@@ -4,10 +4,10 @@
     <title>Strings over Σ</title>
     <description>A blog about computer science, logic and programming. Occasionally other topics reasonably consistent with the rest.
 </description>
-    <link>http://bitsrc.org/blog/</link>
-    <atom:link href="http://bitsrc.org/blog/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Tue, 09 Jun 2020 23:49:24 +0200</pubDate>
-    <lastBuildDate>Tue, 09 Jun 2020 23:49:24 +0200</lastBuildDate>
+    <link>https://bitsrc.org/blog/</link>
+    <atom:link href="https://bitsrc.org/blog/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Tue, 09 Jun 2020 23:51:31 +0200</pubDate>
+    <lastBuildDate>Tue, 09 Jun 2020 23:51:31 +0200</lastBuildDate>
     <generator>Jekyll v4.0.0</generator>
     
       <item>
@@ -403,8 +403,8 @@ make any sense either, because they are both single values.&lt;/p&gt;
 &lt;/div&gt;
 </description>
         <pubDate>Sun, 19 Apr 2020 17:30:00 +0200</pubDate>
-        <link>http://bitsrc.org/blog/2020/04/19/linux-the-good-the-bad-and-the-ugly.html</link>
-        <guid isPermaLink="true">http://bitsrc.org/blog/2020/04/19/linux-the-good-the-bad-and-the-ugly.html</guid>
+        <link>https://bitsrc.org/blog/2020/04/19/linux-the-good-the-bad-and-the-ugly.html</link>
+        <guid isPermaLink="true">https://bitsrc.org/blog/2020/04/19/linux-the-good-the-bad-and-the-ugly.html</guid>
         
         
       </item>
@@ -597,8 +597,8 @@ grown enough for the overhead in taking notes to pay dividends.&lt;/p&gt;
 &lt;/div&gt;
 </description>
         <pubDate>Thu, 16 Apr 2020 00:40:00 +0200</pubDate>
-        <link>http://bitsrc.org/blog/2020/04/16/organizing-notetaking.html</link>
-        <guid isPermaLink="true">http://bitsrc.org/blog/2020/04/16/organizing-notetaking.html</guid>
+        <link>https://bitsrc.org/blog/2020/04/16/organizing-notetaking.html</link>
+        <guid isPermaLink="true">https://bitsrc.org/blog/2020/04/16/organizing-notetaking.html</guid>
         
         
       </item>
@@ -876,8 +876,8 @@ grown enough for the overhead in taking notes to pay dividends.&lt;/p&gt;
 &lt;p&gt;If you have made it this far, it is probably also worth noting that the Z3 SMT solver has a &lt;a href=&quot;https://rise4fun.com/z3/tutorialcontent/sequences#h23&quot;&gt;Regex Theory&lt;/a&gt;. The last time I’ve played with it it was giving obviously incorrect answers, but that seems to have been rectified since. The nice thing about &lt;code class=&quot;highlighter-rouge&quot;&gt;regexp/syntax&lt;/code&gt; is that it uses the same library your application uses if you write it in Golang, and can be used in programs with more predictable performance and fewer dependencies than Z3.&lt;/p&gt;
 </description>
         <pubDate>Thu, 01 Mar 2018 01:00:00 +0100</pubDate>
-        <link>http://bitsrc.org/blog/programming/2018/03/01/golang-regexp.html</link>
-        <guid isPermaLink="true">http://bitsrc.org/blog/programming/2018/03/01/golang-regexp.html</guid>
+        <link>https://bitsrc.org/blog/programming/2018/03/01/golang-regexp.html</link>
+        <guid isPermaLink="true">https://bitsrc.org/blog/programming/2018/03/01/golang-regexp.html</guid>
         
         
         <category>programming</category>
@@ -927,8 +927,8 @@ grown enough for the overhead in taking notes to pay dividends.&lt;/p&gt;
 &lt;p&gt;The rest of the argument goes on in similar fashion, incorrectly combining concepts of theoretical computer science with implementations, citing how other virtual machines manage to be more general purpose, and so on, and so forth; the latter of which, of course, is true – but invariantly true for CPython 2 and CPython 3.&lt;/p&gt;
 </description>
         <pubDate>Wed, 23 Nov 2016 23:40:00 +0100</pubDate>
-        <link>http://bitsrc.org/blog/computer-science/2016/11/23/someone-is-wrong-on-the-internet.html</link>
-        <guid isPermaLink="true">http://bitsrc.org/blog/computer-science/2016/11/23/someone-is-wrong-on-the-internet.html</guid>
+        <link>https://bitsrc.org/blog/computer-science/2016/11/23/someone-is-wrong-on-the-internet.html</link>
+        <guid isPermaLink="true">https://bitsrc.org/blog/computer-science/2016/11/23/someone-is-wrong-on-the-internet.html</guid>
         
         
         <category>computer-science</category>
@@ -1073,8 +1073,8 @@ and uses the same operations on both sides).&lt;/p&gt;
 
 </description>
         <pubDate>Fri, 14 Oct 2016 18:00:00 +0200</pubDate>
-        <link>http://bitsrc.org/blog/python/2016/10/14/operator-overloading.html</link>
-        <guid isPermaLink="true">http://bitsrc.org/blog/python/2016/10/14/operator-overloading.html</guid>
+        <link>https://bitsrc.org/blog/python/2016/10/14/operator-overloading.html</link>
+        <guid isPermaLink="true">https://bitsrc.org/blog/python/2016/10/14/operator-overloading.html</guid>
         
         
         <category>python</category>
@@ -1094,8 +1094,8 @@ and uses the same operations on both sides).&lt;/p&gt;
 &lt;p&gt;This mirrors the distinction between classical and intuitionistic logic. In classical logic, there is a platonic idea of truth (and thus existence): it is legitimate to refer to an object that one has no procedure on how to produce, if one can infer it has to exist (whatever it is). Intuitionistic logic, however, is a lot stricter and requires there to be a procedure on how to produce the objects.&lt;/p&gt;
 </description>
         <pubDate>Sun, 25 Sep 2016 18:00:00 +0200</pubDate>
-        <link>http://bitsrc.org/blog/logic/2016/09/25/completeness.html</link>
-        <guid isPermaLink="true">http://bitsrc.org/blog/logic/2016/09/25/completeness.html</guid>
+        <link>https://bitsrc.org/blog/logic/2016/09/25/completeness.html</link>
+        <guid isPermaLink="true">https://bitsrc.org/blog/logic/2016/09/25/completeness.html</guid>
         
         
         <category>logic</category>
@@ -1120,8 +1120,8 @@ and uses the same operations on both sides).&lt;/p&gt;
 
 </description>
         <pubDate>Sat, 03 Sep 2016 17:15:00 +0200</pubDate>
-        <link>http://bitsrc.org/blog/apaw/2016/09/03/a-paper-a-week-keystroke-recognition-wifi.html</link>
-        <guid isPermaLink="true">http://bitsrc.org/blog/apaw/2016/09/03/a-paper-a-week-keystroke-recognition-wifi.html</guid>
+        <link>https://bitsrc.org/blog/apaw/2016/09/03/a-paper-a-week-keystroke-recognition-wifi.html</link>
+        <guid isPermaLink="true">https://bitsrc.org/blog/apaw/2016/09/03/a-paper-a-week-keystroke-recognition-wifi.html</guid>
         
         
         <category>apaw</category>
@@ -1141,8 +1141,8 @@ and uses the same operations on both sides).&lt;/p&gt;
 &lt;p&gt;Elaborating more (it was late yesterday): I/O can be “simulated” with appropriate encoding in the output, but that is one of the points: arithmetic is Turing-complete, so I can, for all Turing-computable functions, produce an integer that &lt;em&gt;somehow encodes&lt;/em&gt; its result. This is an extremely important theoretical construct in computation theory, but also useless in a practical context, because I want to write actual data into actual memory of an actual machine.&lt;/p&gt;
 </description>
         <pubDate>Sun, 28 Aug 2016 00:46:00 +0200</pubDate>
-        <link>http://bitsrc.org/blog/theoretical-cs/2016/08/28/turing-complete.html</link>
-        <guid isPermaLink="true">http://bitsrc.org/blog/theoretical-cs/2016/08/28/turing-complete.html</guid>
+        <link>https://bitsrc.org/blog/theoretical-cs/2016/08/28/turing-complete.html</link>
+        <guid isPermaLink="true">https://bitsrc.org/blog/theoretical-cs/2016/08/28/turing-complete.html</guid>
         
         
         <category>theoretical-cs</category>
@@ -1169,8 +1169,8 @@ and uses the same operations on both sides).&lt;/p&gt;
 
 </description>
         <pubDate>Sun, 17 Apr 2016 01:10:00 +0200</pubDate>
-        <link>http://bitsrc.org/blog/apaw/2016/04/17/a-paper-a-week-graphlab-framework-parallel-machine-learning.html</link>
-        <guid isPermaLink="true">http://bitsrc.org/blog/apaw/2016/04/17/a-paper-a-week-graphlab-framework-parallel-machine-learning.html</guid>
+        <link>https://bitsrc.org/blog/apaw/2016/04/17/a-paper-a-week-graphlab-framework-parallel-machine-learning.html</link>
+        <guid isPermaLink="true">https://bitsrc.org/blog/apaw/2016/04/17/a-paper-a-week-graphlab-framework-parallel-machine-learning.html</guid>
         
         
         <category>apaw</category>
@@ -1316,8 +1316,8 @@ sat&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 </description>
         <pubDate>Sun, 03 Apr 2016 23:40:00 +0200</pubDate>
-        <link>http://bitsrc.org/blog/logic/2016/04/03/theorem-proving-logic-puzzles.html</link>
-        <guid isPermaLink="true">http://bitsrc.org/blog/logic/2016/04/03/theorem-proving-logic-puzzles.html</guid>
+        <link>https://bitsrc.org/blog/logic/2016/04/03/theorem-proving-logic-puzzles.html</link>
+        <guid isPermaLink="true">https://bitsrc.org/blog/logic/2016/04/03/theorem-proving-logic-puzzles.html</guid>
         
         
         <category>logic</category>
