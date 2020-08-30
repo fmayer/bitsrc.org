@@ -6,9 +6,112 @@
 </description>
     <link>https://bitsrc.org/blog/</link>
     <atom:link href="https://bitsrc.org/blog/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Tue, 09 Jun 2020 23:51:31 +0200</pubDate>
-    <lastBuildDate>Tue, 09 Jun 2020 23:51:31 +0200</lastBuildDate>
+    <pubDate>Sun, 30 Aug 2020 20:11:10 +0200</pubDate>
+    <lastBuildDate>Sun, 30 Aug 2020 20:11:10 +0200</lastBuildDate>
     <generator>Jekyll v4.0.0</generator>
+    
+      <item>
+        <title>Anatomy of a Bug</title>
+        <description>&lt;p&gt;Last week, a simple test failure on continuous integration sent me on an odyssey
+that ended in setting breakpoints in the linker. I thought it might be fun to
+document this for posterity. But first, for a bit of background.&lt;/p&gt;
+
+&lt;p&gt;My job involves working on the &lt;a href=&quot;https://perfetto.dev/docs/data-sources/native-heap-profiler&quot;&gt;Android Heap Profiler&lt;/a&gt;, which allows developers
+to see where in their program native allocations get made. Native allocations
+are allocations made through the &lt;code class=&quot;highlighter-rouge&quot;&gt;malloc(3)&lt;/code&gt; family of functions (which get used
+by C++ &lt;code class=&quot;highlighter-rouge&quot;&gt;operator new&lt;/code&gt;). We have some code im Android’s libc, Bionic, to
+intercept calls to malloc and report them to the heap profiler.
+That’s been working very well, but some programs have other allocation functions
+that request memory directly from the operating system.&lt;/p&gt;
+
+&lt;p&gt;To gain visibility into that memory as well, we are adding an API that
+lets developers explicitly report these allocations. For architectural neatness,
+that same API is used by libc to report the &lt;code class=&quot;highlighter-rouge&quot;&gt;malloc&lt;/code&gt; allocations.&lt;/p&gt;
+
+&lt;p&gt;When I added test-cases to this to the integration tests, other tests whose
+code had not changed started failing; also when ran in isolation. But not when
+I tried to reproduce locally on my phone. It took me some time until I realised
+that actually, the test failing CI was the 32bit integration test bianry, while
+I was using the 64bit one trying to reproduce locally. Switching that to the
+32bit one made it fail locally as well.&lt;/p&gt;
+
+&lt;p&gt;Still, the problem that tests whose code hadn’t changed suddenly started
+failing remained. What had changed, I realised, was that I started linking the
+shared library providing the API into the test binary. To see if that was the
+cause, I reverted all changes except the one linking the shared library. Indeed,
+the tests were still failing.&lt;/p&gt;
+
+&lt;p&gt;For better understanding, some broader exposition of how the profiler works, and what the
+failing tests were doing, is in order. The profiler can start profiling at two different
+points: at &lt;em&gt;startup&lt;/em&gt;, which profiles all allocations made by a process
+since it has started; or while the process was &lt;em&gt;running&lt;/em&gt;, which only profiles
+allocations made from that point on. A process detects whether it is a target
+of a &lt;em&gt;startup&lt;/em&gt; profile in its libc constructor, which gets run at process
+startup. If that is the case, the constructor dlopens a library for hooking
+the &lt;code class=&quot;highlighter-rouge&quot;&gt;malloc&lt;/code&gt; functions. This library depends on the Heap Profiler API to
+report the allocations, and which has some global state asssociated with the
+active profiling session.&lt;/p&gt;
+
+&lt;p&gt;The failing tests checked whether all of this worked. They do this
+by starting a &lt;em&gt;startup&lt;/em&gt; profile and then launching  a process that
+runs &lt;code class=&quot;highlighter-rouge&quot;&gt;malloc&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;free&lt;/code&gt; in an infinite loop, then asserting these
+calls have been recorded. In this case, they weren’t.&lt;/p&gt;
+
+&lt;p&gt;I started adding some logging to dump the global state every time an allocation was
+getting reported. The result was puzzling: the first few allocations were
+correctly recorded, but then the global state indicated no session was active.
+I added logging to any place that could possibly clear the global state, but
+none of them got called. It just vanished into thin air.&lt;/p&gt;
+
+&lt;p&gt;But someone had to be changing that memory, so I brought out the heavy gun.
+I fired up GDB, and set a breakpoint in the function to report an allocation.
+The first time that function gets hit, the global state is valid, so all I have
+to do is set a watchpoint on that, and I’ll find the culprit.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;Continuing.
+Warning:
+Could not insert hardware watchpoint 1.
+Could not insert hardware breakpoints:
+You may have requested too many hardware breakpoints/watchpoints.&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The static variable containing the state looked like this, with &lt;code class=&quot;highlighter-rouge&quot;&gt;NoDestructor&lt;/code&gt;
+being some syntactic sugar around a &lt;code class=&quot;highlighter-rouge&quot;&gt;char[]&lt;/code&gt; and a placement new, to prevent
+destructors being run at program exit (which would potentially mess up other
+destructors that use malloc or free).&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-c--&quot; data-lang=&quot;c++&quot;&gt;&lt;span class=&quot;k&quot;&gt;namespace&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;perfetto&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;NoDestructor&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shared_ptr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;perfetto&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;profiling&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Client&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;g_client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;It took some digging to find that when GDB is asked to watch something large,
+it will essentially split it into watches of smaller pieces that it can handle.
+What the error message was telling me was that I was trying to watch something
+that is too large.&lt;/p&gt;
+
+&lt;p&gt;So I ended up watching just a part of the underlying char array, which ended
+up working fine. From this I learned that the function that was zeroing out
+my global state was &lt;code class=&quot;highlighter-rouge&quot;&gt;_GLOBAL__sub_I_client_ext.cc&lt;/code&gt;, which is an autogenerated
+constructor for initializing static variables.&lt;/p&gt;
+
+&lt;p&gt;XXX: _GLOBAL__sub_I_client_ext.cc stack.&lt;/p&gt;
+
+&lt;p&gt;Now that’s something that could explain why this problem only manifests on
+arm32, not on aarch64. What if the aarch64 version of the library does not
+actually run a constructor to intitialize the variable? That is exactly what
+was happening.&lt;/p&gt;
+
+&lt;p&gt;XXX: readelf -d&lt;/p&gt;
+
+</description>
+        <pubDate>Mon, 22 Jun 2020 17:30:00 +0200</pubDate>
+        <link>https://bitsrc.org/blog/2020/06/22/anatomy-of-a-bug.html</link>
+        <guid isPermaLink="true">https://bitsrc.org/blog/2020/06/22/anatomy-of-a-bug.html</guid>
+        
+        
+      </item>
     
       <item>
         <title>Linux: The good, the bad and the ugly</title>
@@ -1174,153 +1277,6 @@ and uses the same operations on both sides).&lt;/p&gt;
         
         
         <category>apaw</category>
-        
-      </item>
-    
-      <item>
-        <title>Using theorem proving to cheat in logic puzzles</title>
-        <description>&lt;p&gt;I recently got the book &lt;a href=&quot;http://www.amazon.co.uk/What-Name-This-Book-Recreational/dp/0486481980&quot; title=&quot;What is the name of this book?&quot;&gt;What is the Name of this Book?&lt;/a&gt; by the excellent Raymon Smullyan, who is also the author of a book about &lt;a href=&quot;http://www.amazon.co.uk/Godels-Incompleteness-Theorems-Oxford-Guides/dp/0195046722&quot; title=&quot;Gödels Incompleteness Theorems&quot;&gt;Gödel’s Incompleteness Theorems&lt;/a&gt; I could not praise highly enough. The book I purchased is a collection of logical riddles. While recreationally solving logical puzzles oneself can be very rewarding, when I got the book I considered that it would be interesting to try and solve these using formalized logic. Letting a computer find the solution given the formal specification is the obvious next step, which is what I will attempt in this blogpost. To do so, I will first formalize the specification in first-order logic, and then use the &lt;a href=&quot;https://z3.codeplex.com&quot; title=&quot;Z3 SMT Solver&quot;&gt;Z3 SMT solver&lt;/a&gt; to find satisfying models.&lt;/p&gt;
-
-&lt;p&gt;A lot of the book is about a world in which there are two types of people, knights and knaves. Knights always speak the truth, and knaves always lie. This particular puzzle is about finding out information about the one werewolf among people A, B and C that make the following statements.&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;A: C is a werewolf.&lt;/li&gt;
-  &lt;li&gt;B: I am not a werewolf.&lt;/li&gt;
-  &lt;li&gt;C: At least two of us are knaves.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;We are trying to find answers to the following two questions:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Is the werewolf a knight or a knave?&lt;/li&gt;
-  &lt;li&gt;If you have to take one of them as a travelling companion, and it is more important that he be not a werewolf than that he not be a knave, which one would you pick?&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;First we will formalize the fact that there is exactly one werewolf as the two statements “there exists at least one werewolf” and “the werewolf is unique” (we assume that the universe contains only persons, because they are the only objects in this riddle, so we do not need a predicate for “is person”):&lt;/p&gt;
-
-&lt;p&gt;\begin{equation}\label{firsteqn}
-\exists x\, Werewolf(x)
-\end{equation}&lt;/p&gt;
-
-&lt;p&gt;\begin{equation}\label{onewerewolf}
-\forall x\, (Werewolf(x) \implies (\forall y\, (x \ne y \implies \neg Werewolf(y))))
-\end{equation}&lt;/p&gt;
-
-&lt;p&gt;Then, we introduce the Knight predicate (and an equivalence of negative Knight to Knave for convenience)&lt;/p&gt;
-
-&lt;p&gt;\begin{equation}\label{knave}
-\forall x\, (Knight(x) \equiv \neg Knave(x)) 
-\end{equation}&lt;/p&gt;
-
-&lt;p&gt;Next we can formalize the three statements, which are true if and only if the person that says them is a Knight.&lt;/p&gt;
-
-&lt;p&gt;\begin{equation}\label{astate}
-Knight(A) \equiv Werewolf(C) 
-\end{equation}&lt;/p&gt;
-
-&lt;p&gt;\begin{equation}\label{bstate}
-Knight(B) \equiv \neg Werewolf(B) 
-\end{equation}&lt;/p&gt;
-
-&lt;p&gt;\begin{equation}\label{lasteqn}
-Knight(C) \equiv \exists x\, \exists y\, (x \ne y \land Knave(x) \land Knave(y)) 
-\end{equation}&lt;/p&gt;
-
-&lt;p&gt;If we call the set of equations (\ref{firsteqn}) to (\ref{lasteqn}) \( \Pi \), then we want to find out whether&lt;/p&gt;
-
-&lt;p&gt;\begin{equation}\label{sol1}
-\Pi \models \exists x\, (Knight(x) \land Werewolf(x))
-\end{equation}&lt;/p&gt;
-
-&lt;p&gt;\begin{equation}\label{sol2}
-\Pi \models \exists x\, (Knave(x) \land Werewolf(x))
-\end{equation}&lt;/p&gt;
-
-&lt;p&gt;Then, to answer the second question, we want to check&lt;/p&gt;
-
-&lt;p&gt;\begin{equation}\label{sol3}
-\Pi \models \neg Werewolf(A)
-\end{equation}&lt;/p&gt;
-
-&lt;p&gt;\begin{equation}\label{sol4}
-\Pi \models \neg Werewolf(B)
-\end{equation}&lt;/p&gt;
-
-&lt;p&gt;\begin{equation}\label{sol5}
-\Pi \models \neg Werewolf(C)
-\end{equation}&lt;/p&gt;
-
-&lt;p&gt;So, with that out of the way, let us introduce the tool that will make sure we do not need to do any thinking: the Z3 SMT solver. SMT stands for satisfyability modulo theory and means that you can give it first-order formulas of some theories (like equality, integers, computer arithmetic, …) and it will try to find a satisfying model. Given infinite domains there is no guarantee that will be found (especially the negative answer is particularly challenging – if there is a positive one it will be found by enumeration eventually). If you want to prove \( \Pi \models A \) using an SMT solver, in general what you do is apply the deduction theorem to obtain \( \models \pi \implies A \) (where \( \pi \) is the conjunction of the elements of \( \Pi \)). All possible models satisfy this if and only if there is no model satisfying the negation, i.e. \( \neg ( \pi \implies A) \), which can be rewritten as \(\pi \land \neg A \). In other words, we ask the SMT solver if  \(\pi \land \neg A \) is satisfyable, and if the answer is no, \( \Pi \models A \) holds.&lt;/p&gt;
-
-&lt;p&gt;Now all that’s left is translating this specification to Z3’s language. First thing we need to do is define a datatype for our objects, that are Persons. By using &lt;code class=&quot;highlighter-rouge&quot;&gt;declare-datatype&lt;/code&gt; we get objects that are only equal to themselves, so we can use the equality predicate as above.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;(set-option :timeout 600)
-(declare-datatypes () ((Person A B C)))&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Then, we need to define our three predicates Knight, Knave and Werewolf.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;(declare-fun Knight (Person) Bool)
-(declare-fun Knave (Person) Bool)
-(declare-fun Werewolf (Person) Bool)&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Then we can formalize the formulas of \( \Pi \) into Z3 syntax pretty much verbatim. The statement that there is exactly one werewolf can be expressed with the two assertions that a model has to satisfy&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;(assert (exists ((x Person)) (Werewolf x)))
-(assert (forall ((x Person)) (implies (Werewolf x) (forall ((y Person)) (implies (not (= x y)) (not (Werewolf y)))))))&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;The three statements by A, B and C become the following. Note that &lt;code class=&quot;highlighter-rouge&quot;&gt;=&lt;/code&gt; is used for both logical equivalence and equality between objects of the universe in Z3.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;(assert (forall ((x Person)) (= (Knight x) (not (Knave x)))))
-(assert (= (Knight A) (Werewolf C)))
-(assert (= (Knight B) (not (Werewolf B))))
-(assert (= (Knight C) (exists ((x Person) (y Person)) (and (not (= x y)) (and (Knave x) (Knave y))))))&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Now we have asserted all we know about the problem, we can begin trying to prove (\ref{sol1}) – (\ref{sol5}) to see which one the solutions is correct. We use the &lt;code class=&quot;highlighter-rouge&quot;&gt;push&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;pop&lt;/code&gt; operations of Z3 to temporarily add add assertions between the two operations. I simplified \( \neg \neg Werewolf(…) \) to \( Werewolf(…) \)&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;(push)
-(assert (not (exists ((x Person)) (and (Werewolf x) (Knave x)))))
-(check-sat)
-(pop)
-
-(push)
-(assert (not (exists ((x Person)) (and (Werewolf x) (Knight x)))))
-(check-sat)
-(pop)
-
-(push)
-(assert (Werewolf A))
-(check-sat)
-(pop)
-
-(push)
-(assert (Werewolf B))
-(check-sat)
-(pop)
-
-(push)
-(assert (Werewolf C))
-(check-sat)
-(pop)&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Z3’s answer to the input we gave it is&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;unsat
-sat
-unsat
-sat
-sat&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;This means that (\ref{sol1}) and (\ref{sol3}) hold in all models, and the others do not. This means that the werewolf is a Knave, and we should take person A as our travelling companion.&lt;/p&gt;
-
-&lt;p&gt;While a rather simple example, I think this is a nice demonstration of what one can do with an SMT solver.&lt;/p&gt;
-
-</description>
-        <pubDate>Sun, 03 Apr 2016 23:40:00 +0200</pubDate>
-        <link>https://bitsrc.org/blog/logic/2016/04/03/theorem-proving-logic-puzzles.html</link>
-        <guid isPermaLink="true">https://bitsrc.org/blog/logic/2016/04/03/theorem-proving-logic-puzzles.html</guid>
-        
-        
-        <category>logic</category>
         
       </item>
     
