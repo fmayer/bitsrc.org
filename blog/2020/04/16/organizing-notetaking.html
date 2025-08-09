@@ -90,9 +90,9 @@
   </header>
 
   <article class="post-content">
-    <p>With the unprecedented en vogue<sup id="fnref:1"><a href="#fn:1" class="footnote">1</a></sup> right now, I have taken the unprecedented
+    <p>With the unprecedented en vogue<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">1</a></sup> right now, I have taken the unprecedented
 step of trying out Emacs after having been a loyal Vim user for years. This is
-not going to be another charge in the endless Editor War<sup id="fnref:2"><a href="#fn:2" class="footnote">2</a></sup>. Rather more
+not going to be another charge in the endless Editor War<sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">2</a></sup>. Rather more
 uncontroversially, this is going to focus on note-taking and how technology can
 (and cannot) help.</p>
 
@@ -101,13 +101,13 @@ sense. But first to more elementary things.</p>
 
 <h1 id="pen-and-paper">Pen and Paper</h1>
 
-<p>On my desk at work<sup id="fnref:3"><a href="#fn:3" class="footnote">3</a></sup> I have a notebook (of nice dotted paper<sup id="fnref:4"><a href="#fn:4" class="footnote">4</a></sup>) and a fountain
-pen<sup id="fnref:5"><a href="#fn:5" class="footnote">5</a></sup>. I use them to take notes in meetings, while working, draw diagrams,
+<p>On my desk at work<sup id="fnref:3" role="doc-noteref"><a href="#fn:3" class="footnote" rel="footnote">3</a></sup> I have a notebook (of nice dotted paper<sup id="fnref:4" role="doc-noteref"><a href="#fn:4" class="footnote" rel="footnote">4</a></sup>) and a fountain
+pen<sup id="fnref:5" role="doc-noteref"><a href="#fn:5" class="footnote" rel="footnote">5</a></sup>. I use them to take notes in meetings, while working, draw diagrams,
 write TODO lists. I clearly mark items that are tasks, and tick them off once
 done. Once a notebook is full, I scan it for archival.</p>
 
 <p>It works fairly well, but there are some limitations. An obvious drawback is
-the lack of searchability<sup id="fnref:6"><a href="#fn:6" class="footnote">6</a></sup>. This is not helped by that the way I keep the
+the lack of searchability<sup id="fnref:6" role="doc-noteref"><a href="#fn:6" class="footnote" rel="footnote">6</a></sup>. This is not helped by that the way I keep the
 notebook, it is sorted by time; this also makes it hard to amend or extend
 previous entries. Legibility occasionally is an issue, especially when I take
 notes in a hurry, for instance in a meeting.</p>
@@ -117,7 +117,7 @@ With all our fancy tools of the supposed information age, can we do better?</p>
 
 <h1 id="maybe">Maybe?</h1>
 <p>This has been my main note-taking system for about three years now. Before that,
-calling my note-taking at work a system would have been a euphemism<sup id="fnref:7"><a href="#fn:7" class="footnote">7</a></sup>. How
+calling my note-taking at work a system would have been a euphemism<sup id="fnref:7" role="doc-noteref"><a href="#fn:7" class="footnote" rel="footnote">7</a></sup>. How
 come I, as a computer engineer with terrible handwriting, still use a physical
 piece of paper?</p>
 
@@ -215,9 +215,9 @@ But this time, the walled-garden is within an open-source software, so maybe
 we can do something to jump the wall.</p>
 
 <h1 id="instant-org">Instant-Org</h1>
-<p>These ideas have led me to write a <a href="https://gist.github.com/segfaulthunter/f56ec6b8fd579b5bf1a0298a0f8cc175">simple prototype</a> of how a system that can
+<p>These ideas have led me to write a <a href="https://gist.github.com/fmayer/f56ec6b8fd579b5bf1a0298a0f8cc175">simple prototype</a> of how a system that can
 jump that wall might look. The idea is very simple: whenever we switch to a new
-window<sup id="fnref:8"><a href="#fn:8" class="footnote">8</a></sup>, we analyze whether the currently focused window relates to any
+window<sup id="fnref:8" role="doc-noteref"><a href="#fn:8" class="footnote" rel="footnote">8</a></sup>, we analyze whether the currently focused window relates to any
 entity that we have a note about: for instance, if we switch to a browser
 window, I parse the title to see whether we are currently looking at a bug,
 a pull request, a GitHub repository (sadly, each of those is a hardcoded
@@ -241,36 +241,36 @@ grown enough for the overhead in taking notes to pay dividends.</p>
 
 <h1 id="endnotes">Endnotes</h1>
 
-<div class="footnotes">
+<div class="footnotes" role="doc-endnotes">
   <ol>
-    <li id="fn:1">
+    <li id="fn:1" role="doc-endnote">
       <p>If anyone happens to read this in the future: this was written at the
-  time of the global COVID-19 lockdowns. <a href="#fnref:1" class="reversefootnote">&#8617;</a></p>
+  time of the global COVID-19 lockdowns. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:2">
-      <p>Vim keybindings are better. <a href="#fnref:2" class="reversefootnote">&#8617;</a></p>
+    <li id="fn:2" role="doc-endnote">
+      <p>Vim keybindings are better. <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:3">
+    <li id="fn:3" role="doc-endnote">
       <p>If you have never tried dotted paper, do it. It’s like squared paper with
-  less visual clutter. I like the <a href="https://www.amazon.co.uk/gp/product/B00BCH03Z2">Rhodia A4 notebook</a>. <a href="#fnref:3" class="reversefootnote">&#8617;</a></p>
+  less visual clutter. I like the <a href="https://www.amazon.co.uk/gp/product/B00BCH03Z2">Rhodia A4 notebook</a>. <a href="#fnref:3" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:4">
-      <p>Which I, inconveniently, have no access to right now. <a href="#fnref:4" class="reversefootnote">&#8617;</a></p>
+    <li id="fn:4" role="doc-endnote">
+      <p>Which I, inconveniently, have no access to right now. <a href="#fnref:4" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:5">
+    <li id="fn:5" role="doc-endnote">
       <p>JinHao make <a href="https://www.amazon.co.uk/dp/B07PQ2RXF7">insanely affordable</a>
-  ones. I promise I do not get paid for these Amazon links. <a href="#fnref:5" class="reversefootnote">&#8617;</a></p>
+  ones. I promise I do not get paid for these Amazon links. <a href="#fnref:5" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:6">
+    <li id="fn:6" role="doc-endnote">
       <p>There will need to be some more breakthroughs in machine learning before
   I can subject my handwriting to OCR software, and until then I’ll have to
-  continue to search manually. <a href="#fnref:6" class="reversefootnote">&#8617;</a></p>
+  continue to search manually. <a href="#fnref:6" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:7">
-      <p>University is easier. Things can be neatly arranged by subjects. <a href="#fnref:7" class="reversefootnote">&#8617;</a></p>
+    <li id="fn:7" role="doc-endnote">
+      <p>University is easier. Things can be neatly arranged by subjects. <a href="#fnref:7" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:8">
-      <p>Actually, I just poll the active window every 100 ms to see if it changed. <a href="#fnref:8" class="reversefootnote">&#8617;</a></p>
+    <li id="fn:8" role="doc-endnote">
+      <p>Actually, I just poll the active window every 100 ms to see if it changed. <a href="#fnref:8" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
   </ol>
 </div>
@@ -312,19 +312,6 @@ grown enough for the overhead in taking notes to pay dividends.</p>
           </li>
           
 
-          
-          <li>
-            <a href="https://twitter.com/segfaulthunter">
-              <span class="icon  icon--twitter">
-                <svg viewBox="0 0 16 16">
-                  <path fill="#828282" d="M15.969,3.058c-0.586,0.26-1.217,0.436-1.878,0.515c0.675-0.405,1.194-1.045,1.438-1.809
-                  c-0.632,0.375-1.332,0.647-2.076,0.793c-0.596-0.636-1.446-1.033-2.387-1.033c-1.806,0-3.27,1.464-3.27,3.27 c0,0.256,0.029,0.506,0.085,0.745C5.163,5.404,2.753,4.102,1.14,2.124C0.859,2.607,0.698,3.168,0.698,3.767 c0,1.134,0.577,2.135,1.455,2.722C1.616,6.472,1.112,6.325,0.671,6.08c0,0.014,0,0.027,0,0.041c0,1.584,1.127,2.906,2.623,3.206 C3.02,9.402,2.731,9.442,2.433,9.442c-0.211,0-0.416-0.021-0.615-0.059c0.416,1.299,1.624,2.245,3.055,2.271 c-1.119,0.877-2.529,1.4-4.061,1.4c-0.264,0-0.524-0.015-0.78-0.046c1.447,0.928,3.166,1.469,5.013,1.469 c6.015,0,9.304-4.983,9.304-9.304c0-0.142-0.003-0.283-0.009-0.423C14.976,4.29,15.531,3.714,15.969,3.058z"/>
-                </svg>
-              </span>
-
-              <span class="username">segfaulthunter</span>
-            </a>
-          </li>
           
         </ul>
       </div>

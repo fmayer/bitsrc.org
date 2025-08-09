@@ -124,7 +124,7 @@ things, among them</p>
 <p>Many of these things are not files in the either the sense that you can use
 them to store data, nor in the sense that they have a path on the file system.
 That all of these things are file descriptors is actually kind of cool: you can
-wait on many of these things, and asynchronous I/O APIs like <code class="highlighter-rouge">epoll</code> operate on
+wait on many of these things, and asynchronous I/O APIs like <code class="language-plaintext highlighter-rouge">epoll</code> operate on
 file descriptors. This means that you can wait for data to become available on
 some socket <em>or</em> for some timer to run out <em>or</em> for a POSIX signal to arrive.
 No threading nonsense involved.</p>
@@ -137,14 +137,14 @@ even mean to write to a timerfd? This gets even worse when talking about errors.
 Manpages will have a list of possible errnos, but with file descriptor
 functions, usually all bets are off (short of delving into the kernel source)
 of trying to understand which ones can happen for your particular case. If
-your FD is special enough (say, some <code class="highlighter-rouge">/sys</code> file), you might even get errors
+your FD is special enough (say, some <code class="language-plaintext highlighter-rouge">/sys</code> file), you might even get errors
 that are <em>not</em> listed on the manpage.</p>
 
 <h1 id="quiz">“Everything is bytes\n\0”</h1>
 <p>Linux has around 300 system calls that you can use in your programs. This is
 sometimes cited as an impressively small API surface for a kernel,
 but that’s only telling half of the truth. There are many, many files in the
-<code class="highlighter-rouge">/proc</code> and <code class="highlighter-rouge">/sys</code> virtual file-systems that you can read from to get
+<code class="language-plaintext highlighter-rouge">/proc</code> and <code class="language-plaintext highlighter-rouge">/sys</code> virtual file-systems that you can read from to get
 information or write to to change some behaviour. You can use them to read a
 process’ command line, to get its CPU use, its memory use, to get or change the
 maximum number of file-descriptors open, set counters on breakpoints, etc.
@@ -155,24 +155,24 @@ you will be using those quite a lot.</p>
 them programatically, you’ll have to parse the output. If you want to do that,
 it helps to know the format well.</p>
 
-<p>Pop quiz! No cheating.<sup id="fnref:2"><a href="#fn:2" class="footnote">1</a></sup></p>
+<p>Pop quiz! No cheating.<sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">1</a></sup></p>
 
 <ol>
-  <li>Does <code class="highlighter-rouge">/proc/&lt;pid&gt;/cmdline</code> have a trailing NUL-byte?</li>
-  <li>Does <code class="highlighter-rouge">/proc/&lt;pid&gt;/status</code> use tabs or spaces?</li>
-  <li>Does <code class="highlighter-rouge">/proc/&lt;pid&gt;/status</code> have a trailing newline?</li>
+  <li>Does <code class="language-plaintext highlighter-rouge">/proc/&lt;pid&gt;/cmdline</code> have a trailing NUL-byte?</li>
+  <li>Does <code class="language-plaintext highlighter-rouge">/proc/&lt;pid&gt;/status</code> use tabs or spaces?</li>
+  <li>Does <code class="language-plaintext highlighter-rouge">/proc/&lt;pid&gt;/status</code> have a trailing newline?</li>
   <li>NUL-byte?</li>
-  <li>Does <code class="highlighter-rouge">/proc/&lt;pid&gt;/oom_score</code> (a single value) have a trailing newline?</li>
-  <li>Does <code class="highlighter-rouge">/proc/&lt;pid&gt;/wchan</code> (a single value) have a trailing newline?</li>
+  <li>Does <code class="language-plaintext highlighter-rouge">/proc/&lt;pid&gt;/oom_score</code> (a single value) have a trailing newline?</li>
+  <li>Does <code class="language-plaintext highlighter-rouge">/proc/&lt;pid&gt;/wchan</code> (a single value) have a trailing newline?</li>
 </ol>
 
 <p><a href="#quiz-results">Go to results</a>.</p>
 
 <p>So that was fun! If you haven’t looked at the results yet, please do take a
 second, even if you haven’t tried to answer yourself. There are multiple problems
-highlighted: most of <code class="highlighter-rouge">/proc</code> files are ad-hoc text formats (at least <em>most</em> of
+highlighted: most of <code class="language-plaintext highlighter-rouge">/proc</code> files are ad-hoc text formats (at least <em>most</em> of
 them do use newlines, it appears). Another one is that they are extremely poorly
-documented. A quick look at <a href="http://man7.org/linux/man-pages/man5/proc.5.html"><code class="highlighter-rouge">man 5 proc</code></a> would not go far in answering
+documented. A quick look at <a href="http://man7.org/linux/man-pages/man5/proc.5.html"><code class="language-plaintext highlighter-rouge">man 5 proc</code></a> would not go far in answering
 the questions in this quiz. You have to look at the files and work out the
 format from this. Of course, if you read this from a program, the kernel
 rendering text only for your program to parse it back again is wasteful in both
@@ -185,9 +185,9 @@ de-facto binary interface. With some configuration in, yes, you guessed it,
 a custom text format.</p>
 
 <h1 id="manything-is-a-race">Manything is a race</h1>
-<p>How would you implement <code class="highlighter-rouge">killall</code>? Conceptually, it’s fairly simple: you go
+<p>How would you implement <code class="language-plaintext highlighter-rouge">killall</code>? Conceptually, it’s fairly simple: you go
 through all processes, and kill the ones matching. Having some function
-<code class="highlighter-rouge">matches</code> to determine whether a PID matches the given specification, you’d
+<code class="language-plaintext highlighter-rouge">matches</code> to determine whether a PID matches the given specification, you’d
 write something along the lines of this:</p>
 
 <figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">pid_t</span><span class="o">&gt;</span> <span class="n">pids</span> <span class="o">=</span> <span class="n">get_all_pids</span><span class="p">();</span>
@@ -199,17 +199,17 @@ write something along the lines of this:</p>
 
 <p>Cool. That seems to work (given some imagination). But if you are a diligent
 programmer, maybe having done some multi-threaded programming, something might
-look a bit off. All we pass around is an integer <code class="highlighter-rouge">pid</code>, so how do we know it
-refers to the same process in <code class="highlighter-rouge">match(pid)</code> and in <code class="highlighter-rouge">kill(pid)</code>? Processes can
+look a bit off. All we pass around is an integer <code class="language-plaintext highlighter-rouge">pid</code>, so how do we know it
+refers to the same process in <code class="language-plaintext highlighter-rouge">match(pid)</code> and in <code class="language-plaintext highlighter-rouge">kill(pid)</code>? Processes can
 go away, and their PIDs will be re-used. In that case, we could potentially
-match PID 1234 when it is <code class="highlighter-rouge">retriable_nonsense_job</code>, but kill
-<code class="highlighter-rouge">super_important_process</code> later.</p>
+match PID 1234 when it is <code class="language-plaintext highlighter-rouge">retriable_nonsense_job</code>, but kill
+<code class="language-plaintext highlighter-rouge">super_important_process</code> later.</p>
 
-<p>So how do you write a <em>correct</em> <code class="highlighter-rouge">killall</code>? Turns out, on Linux it’s impossible
+<p>So how do you write a <em>correct</em> <code class="language-plaintext highlighter-rouge">killall</code>? Turns out, on Linux it’s impossible
 before 5.1, on other Unices it might still be. All the major operating systems’
-implementations are not fundamentally different to the pseudocode above<sup id="fnref:1"><a href="#fn:1" class="footnote">2</a></sup>.
-On Linux 5.1, you can <code class="highlighter-rouge">opendir</code> <code class="highlighter-rouge">/proc/\&lt;pid\&gt;</code>, then use that as a handle to both
-read the command line (and other attributes), and <code class="highlighter-rouge">pidfd_send_signal</code>.</p>
+implementations are not fundamentally different to the pseudocode above<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">2</a></sup>.
+On Linux 5.1, you can <code class="language-plaintext highlighter-rouge">opendir</code> <code class="language-plaintext highlighter-rouge">/proc/\&lt;pid\&gt;</code>, then use that as a handle to both
+read the command line (and other attributes), and <code class="language-plaintext highlighter-rouge">pidfd_send_signal</code>.</p>
 
 <p>This might remind you of some code you might have written. Something like</p>
 
@@ -232,40 +232,40 @@ if it is finished, until you waitpid for it. As you can only wait on your
 children, no race can occur like this. Of course, the other thing that can
 happen is that the parent dies before it has chance to waitpid. In that case,
 the problem is also averted through some gymnastics: the child process gets
-<em>orphaned</em> and reparented to <code class="highlighter-rouge">init</code>, which will wait on it to prevent the
+<em>orphaned</em> and reparented to <code class="language-plaintext highlighter-rouge">init</code>, which will wait on it to prevent the
 zombie from sticking around. <em>Phew</em>.</p>
 
 <h1 id="for-forks-sake">For fork’s sake</h1>
 
-<p><a href="http://man7.org/linux/man-pages/man2/fork.2.html"><code class="highlighter-rouge">fork</code></a> is one of the
+<p><a href="http://man7.org/linux/man-pages/man2/fork.2.html"><code class="language-plaintext highlighter-rouge">fork</code></a> is one of the
 fundamental building blocks of Unix systems. It goes way back to the old days of
 Unix and is used to create a new process. That process is a copy of the
-original one. From an API perspective, to the child it will appear that <code class="highlighter-rouge">fork</code>
+original one. From an API perspective, to the child it will appear that <code class="language-plaintext highlighter-rouge">fork</code>
 returned 0, while to the parent the PID of the child. Kind of magical if you
-think of it.<sup id="fnref:exhalation"><a href="#fn:exhalation" class="footnote">3</a></sup></p>
+think of it.<sup id="fnref:exhalation" role="doc-noteref"><a href="#fn:exhalation" class="footnote" rel="footnote">3</a></sup></p>
 
 <p>Memory does not actually get copied just yet, but only when either the parent
 or the child attempt to change it (this is called copy-on-write). File
 descriptors will get duplicated (convenient that they are already referenced
 counted). Problems already start popping up here: you need to be sure to close
 the ones you don’t actually need in the child, or you might hold on to them
-forever. This gets even worse if you <code class="highlighter-rouge">exec</code> another program, which (in general)
+forever. This gets even worse if you <code class="language-plaintext highlighter-rouge">exec</code> another program, which (in general)
 won’t know or care about your file descriptors. To solve the latter problem,
-<code class="highlighter-rouge">O_CLOEXEC</code> (close on exec) was invented. Of course that’s not the default, so
-people often manually iterate over all FDs (via <code class="highlighter-rouge">/proc</code>), and then close them
+<code class="language-plaintext highlighter-rouge">O_CLOEXEC</code> (close on exec) was invented. Of course that’s not the default, so
+people often manually iterate over all FDs (via <code class="language-plaintext highlighter-rouge">/proc</code>), and then close them
 all.</p>
 
 <p>But then came threads, and we went from bad to worse. Because it’s unclear what
 to do with all these other threads (it’s not like they have a call to fork where
 they could take different branches), they just get terminated in whatever state
 they are when fork gets called. Remember we copied the whole memory state? That
-might contain a lock (say, in <code class="highlighter-rouge">malloc</code>) that was being held by one of those
-threads. The next time anything calls <code class="highlighter-rouge">malloc</code>, it will be stuck forever,
+might contain a lock (say, in <code class="language-plaintext highlighter-rouge">malloc</code>) that was being held by one of those
+threads. The next time anything calls <code class="language-plaintext highlighter-rouge">malloc</code>, it will be stuck forever,
 waiting on the now terminated thread. Your child process is toast. Your program
 might even be single threaded, but some library you pulled might have created a
 thread, that might have happened to do an allocation when you called fork.</p>
 
-<p>They came up with <code class="highlighter-rouge">pthread_atfork</code> hooks that get called before the fork, and
+<p>They came up with <code class="language-plaintext highlighter-rouge">pthread_atfork</code> hooks that get called before the fork, and
 then afterwards in the parent on the child. That was intended to allow library
 developers to make their libraries safe in the presence of forks, but even the
 manpage concedes that this “is generally too difficult to be practicable.”</p>
@@ -274,21 +274,21 @@ manpage concedes that this “is generally too difficult to be practicable.”</
 still an expensive operation for the kernel. It has to copy all sorts of
 structures like page tables and so on. That’s a waste if all we are going
 to do is exec a new program, replacing the page tables once again. So
-they came up with <code class="highlighter-rouge">vfork</code>, which is like fork except that you pinkie-promise
-not to call anything except <code class="highlighter-rouge">exec</code> or <code class="highlighter-rouge">_exit</code> afterwards. This raises
-questions about the API design: if all you are allowed to call is <code class="highlighter-rouge">exec</code>, why
+they came up with <code class="language-plaintext highlighter-rouge">vfork</code>, which is like fork except that you pinkie-promise
+not to call anything except <code class="language-plaintext highlighter-rouge">exec</code> or <code class="language-plaintext highlighter-rouge">_exit</code> afterwards. This raises
+questions about the API design: if all you are allowed to call is <code class="language-plaintext highlighter-rouge">exec</code>, why
 not create a function that is the combination of vfork an exec? With all the
 different exec variations I can see how that would be slightly painful, but at
 least not something that makes it super easy to shoot your foot. In fact,
-<code class="highlighter-rouge">posix_spawn</code> is exactly that and was standardised in 2001.</p>
+<code class="language-plaintext highlighter-rouge">posix_spawn</code> is exactly that and was standardised in 2001.</p>
 
 <p>But going further down the route of forking, modern Linux also has something
-else up its sleeve: <a href="http://man7.org/linux/man-pages/man2/clone.2.html"><code class="highlighter-rouge">clone</code></a>. That let’s you mix-and-match what your new
+else up its sleeve: <a href="http://man7.org/linux/man-pages/man2/clone.2.html"><code class="language-plaintext highlighter-rouge">clone</code></a>. That let’s you mix-and-match what your new
 thread/process should share and what it shouldn’t. It let’s you create
 something that has its own process id, but is a thread for all other intents
 and purposes. Good luck.
 glibc does not provide a syscall wrapper for this, so you’ll have to be extra
-dedicated to use this.<sup id="fnref:wrapper"><a href="#fn:wrapper" class="footnote">4</a></sup></p>
+dedicated to use this.<sup id="fnref:wrapper" role="doc-noteref"><a href="#fn:wrapper" class="footnote" rel="footnote">4</a></sup></p>
 
 <p>Ultimately, things do not compose in a way that make it possible to locally
 reason about a program. Yes, if you hold fork and threads exactly right (for
@@ -319,7 +319,7 @@ bit like duck typing: you call it and hope it works.</p>
        MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE commands
        are not implemented by the architecture.</p>
 
-  <p>– <a href="http://man7.org/linux/man-pages/man2/membarrier.2.html"><code class="highlighter-rouge">man 2 membarrier</code></a></p>
+  <p>– <a href="http://man7.org/linux/man-pages/man2/membarrier.2.html"><code class="language-plaintext highlighter-rouge">man 2 membarrier</code></a></p>
 </blockquote>
 
 <p>Any software that uses one of those system calls is inherently unportable even
@@ -328,7 +328,7 @@ incompatibility at runtime, whenever you attempt to call that syscall.
 Some more sanity could be achieved if there was a way to check for this without
 actually calling the syscall. Then some static analysis could figure out which
 syscalls you use, and then generate a stanza to check whether they exist that
-you can run at first startup. Everything would be like <code class="highlighter-rouge">./configure</code>. What’s
+you can run at first startup. Everything would be like <code class="language-plaintext highlighter-rouge">./configure</code>. What’s
 not to love?</p>
 
 <h1 id="standards">Standards</h1>
@@ -339,11 +339,11 @@ not to love?</p>
 </blockquote>
 
 <p>C++ has <a href="https://timsong-cpp.github.io/cppwp/n3337/">The Standard</a>, which, even
-being aspirational<sup id="fnref:aspirational"><a href="#fn:aspirational" class="footnote">5</a></sup> at times, gives people a way to abstractly
+being aspirational<sup id="fnref:aspirational" role="doc-noteref"><a href="#fn:aspirational" class="footnote" rel="footnote">5</a></sup> at times, gives people a way to abstractly
 reason about their programs. Unix has POSIX, but that is a very low
 common denominator. Linux-specific details have no standard whatsoever. In the
 end, the kernel behaviour is whatever is in the kernel source, and the
-kernel promises to not break userspace<sup id="fnref:nobreak"><a href="#fn:nobreak" class="footnote">6</a></sup>. For libc, it’s the wild west
+kernel promises to not break userspace<sup id="fnref:nobreak" role="doc-noteref"><a href="#fn:nobreak" class="footnote" rel="footnote">6</a></sup>. For libc, it’s the wild west
 without any proper specification once you go beyond what’s specified in C and
 POSIX.</p>
 
@@ -362,21 +362,21 @@ need to care about the kernel.</p>
 <figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">$ </span>./a.out 
 bash: ./a.out: No such file or directory</code></pre></figure>
 
-<p>If you guessed that <code class="highlighter-rouge">a.out</code> didn’t exist, that would be one way of getting this
+<p>If you guessed that <code class="language-plaintext highlighter-rouge">a.out</code> didn’t exist, that would be one way of getting this
 error. But in my case what does not exist is the linker library that is
-specified in the ELF file<sup id="fnref:link-error"><a href="#fn:link-error" class="footnote">7</a></sup>. That’s one of the joys of <code class="highlighter-rouge">errno</code>:
-for more complicated operations like this, it is unclear what file the <code class="highlighter-rouge">ENOENT</code>
+specified in the ELF file<sup id="fnref:link-error" role="doc-noteref"><a href="#fn:link-error" class="footnote" rel="footnote">7</a></sup>. That’s one of the joys of <code class="language-plaintext highlighter-rouge">errno</code>:
+for more complicated operations like this, it is unclear what file the <code class="language-plaintext highlighter-rouge">ENOENT</code>
 error refers to. Some of the socket errnos on the other hand are very specific.
-Other syscalls just give you <code class="highlighter-rouge">EINVAL</code>, and you need to figure out what exactly
+Other syscalls just give you <code class="language-plaintext highlighter-rouge">EINVAL</code>, and you need to figure out what exactly
 is wrong. If all you get is a single integer, I don’t think there’s a way to
 really strike that balance, as you have to encode both what you want humans to
-see, but also what the calling code might deal with. For <code class="highlighter-rouge">EINVAL</code>, a human
+see, but also what the calling code might deal with. For <code class="language-plaintext highlighter-rouge">EINVAL</code>, a human
 would probably want to know which of the arguments was wrong, while the
 calling code can’t do anything with that information.</p>
 
 <h1 id="conclusion">Conclusion</h1>
 <p>I could go on, but I think I’ll wrap it up here. People can only take so much.
-<sup id="fnref:followup"><a href="#fn:followup" class="footnote">8</a></sup></p>
+<sup id="fnref:followup" role="doc-noteref"><a href="#fn:followup" class="footnote" rel="footnote">8</a></sup></p>
 
 <p>Systems programming is exciting, and if you’ve read this far you’d probably be
 inclined to agree. I’ve shown some of the not-so-nice corners I’ve come across.
@@ -399,16 +399,16 @@ expect if there isn’t any.</li>
 
 <p>But also, we have to work with what we’ve got. Even if we come up with robust
 APIs for client applications, there we always be the long-tail of weird
-legacy software that uses the old ones. <code class="highlighter-rouge">fork</code> is here to stay, and so are
+legacy software that uses the old ones. <code class="language-plaintext highlighter-rouge">fork</code> is here to stay, and so are
 threads. What we can do is meticulously document both the caveats that come
-with those, and the behaviour. For <code class="highlighter-rouge">/proc</code> files, some EBNF definition can help
+with those, and the behaviour. For <code class="language-plaintext highlighter-rouge">/proc</code> files, some EBNF definition can help
 both formalize the format, and be used to auto-generate parsers. The less
 we can base our engineering on guesswork, the better.</p>
 
 <h1 id="quiz-results">EBNF results</h1>
 <ol>
-  <li>Maybe.<sup id="fnref:maybe"><a href="#fn:maybe" class="footnote">9</a></sup></li>
-  <li>Tabs.<sup id="fnref:status-tabs"><a href="#fn:status-tabs" class="footnote">10</a></sup></li>
+  <li>Maybe.<sup id="fnref:maybe" role="doc-noteref"><a href="#fn:maybe" class="footnote" rel="footnote">9</a></sup></li>
+  <li>Tabs.<sup id="fnref:status-tabs" role="doc-noteref"><a href="#fn:status-tabs" class="footnote" rel="footnote">10</a></sup></li>
   <li>Yes.</li>
   <li>No.</li>
   <li>Yes.</li>
@@ -423,59 +423,59 @@ make any sense either, because they are both single values.</p>
 
 <h1 id="endnotes">Endnotes</h1>
 
-<div class="footnotes">
+<div class="footnotes" role="doc-endnotes">
   <ol>
-    <li id="fn:2">
-      <p>Or cheat, I’m a sign, not a cop. <a href="#fnref:2" class="reversefootnote">&#8617;</a></p>
+    <li id="fn:2" role="doc-endnote">
+      <p>Or cheat, I’m a sign, not a cop. <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:1">
-      <p><a href="https://github.com/acg/psmisc/blob/master/src/killall.c">GNU/Linux</a>, <a href="http://sources.freebsd.org/RELENG_7/src/usr.bin/killall/killall.c">FreeBSD</a>, or <a href="https://github.com/apple-open-source/macos/blob/master/shell_cmds/killall/killall.c">macOS</a>. <a href="#fnref:1" class="reversefootnote">&#8617;</a></p>
+    <li id="fn:1" role="doc-endnote">
+      <p><a href="https://github.com/acg/psmisc/blob/master/src/killall.c">GNU/Linux</a>, <a href="http://sources.freebsd.org/RELENG_7/src/usr.bin/killall/killall.c">FreeBSD</a>, or <a href="https://github.com/apple-open-source/macos/blob/master/shell_cmds/killall/killall.c">macOS</a>. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:exhalation">
+    <li id="fn:exhalation" role="doc-endnote">
       <p><strong>Spoilers for Ted Chiang’s story “Anxiety Is the Dizziness of
           Freedom”</strong>. It’s like the premise of that story. 
           (Assuming single-threaded) fork brings forth a new
           process that is the same, except for one int, which is used to
-          make a choice. All other differences derive from that. <a href="#fnref:exhalation" class="reversefootnote">&#8617;</a></p>
+          make a choice. All other differences derive from that. <a href="#fnref:exhalation" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:wrapper">
+    <li id="fn:wrapper" role="doc-endnote">
       <p>I’m not a fan of syscalls without wrappers, as that encourages
         people to use raw syscalls, which then constrains libc
         implementors. clone is actually a good example: Bionic (Android’s
         libc) has a cache for the TID of a thread. It needs to invalidate
         that cache upon calls to fork / clone / etc. It can only do this
-        when people use the syscall wrapper. People don’t always. <a href="#fnref:wrapper" class="reversefootnote">&#8617;</a></p>
+        when people use the syscall wrapper. People don’t always. <a href="#fnref:wrapper" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:aspirational">
+    <li id="fn:aspirational" role="doc-endnote">
       <p>Some of the more low-level details leave a lot to be desired.
              Many things are impossible in a standards compliant way, or
              are underspecified, so people end up doing what works in
-             practice. <a href="#fnref:aspirational" class="reversefootnote">&#8617;</a></p>
+             practice. <a href="#fnref:aspirational" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:nobreak">
+    <li id="fn:nobreak" role="doc-endnote">
       <p>This, of course, leads to the question of what constitutes a
         feature, and what constitutes a bug. And what level of quality you
         expect from user-space. For instance, adding a new line to a proc
         file would break applications that do not properly look at key,
         value pairs, but rather hard-code the line they expect the value
         to be at. It’s generally accepted that writing code like this is
-        asking to be broken. <a href="#fnref:nobreak" class="reversefootnote">&#8617;</a></p>
+        asking to be broken. <a href="#fnref:nobreak" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:link-error">
+    <li id="fn:link-error" role="doc-endnote">
       <p>This has actually happened to me before. But if you know where
-           to look (<a href="http://man7.org/linux/man-pages/man2/execve.2.html"><code class="highlighter-rouge">man execve</code></a>),
-           it’s at least documented. <a href="#fnref:link-error" class="reversefootnote">&#8617;</a></p>
+           to look (<a href="http://man7.org/linux/man-pages/man2/execve.2.html"><code class="language-plaintext highlighter-rouge">man execve</code></a>),
+           it’s at least documented. <a href="#fnref:link-error" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:followup">
+    <li id="fn:followup" role="doc-endnote">
       <p>I do have opinions on more things, including but not limited to:
-         <code class="highlighter-rouge">perf_event_open</code>, signals, <code class="highlighter-rouge">sendmsg</code>, session leaders,
-         controlling terminals, <code class="highlighter-rouge">SIGPIPE</code>, … <a href="#fnref:followup" class="reversefootnote">&#8617;</a></p>
+         <code class="language-plaintext highlighter-rouge">perf_event_open</code>, signals, <code class="language-plaintext highlighter-rouge">sendmsg</code>, session leaders,
+         controlling terminals, <code class="language-plaintext highlighter-rouge">SIGPIPE</code>, … <a href="#fnref:followup" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:maybe">
-      <p>Depends on whether your kernel has <a href="https://github.com/torvalds/linux/commit/f5b65348fd77839b50e79bc0a5e536832ea52d8d">this commit</a>. <a href="#fnref:maybe" class="reversefootnote">&#8617;</a></p>
+    <li id="fn:maybe" role="doc-endnote">
+      <p>Depends on whether your kernel has <a href="https://github.com/torvalds/linux/commit/f5b65348fd77839b50e79bc0a5e536832ea52d8d">this commit</a>. <a href="#fnref:maybe" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
-    <li id="fn:status-tabs">
-      <p>The <a href="http://man7.org/linux/man-pages/man5/proc.5.html">manpage</a> uses spaces. <a href="#fnref:status-tabs" class="reversefootnote">&#8617;</a></p>
+    <li id="fn:status-tabs" role="doc-endnote">
+      <p>The <a href="http://man7.org/linux/man-pages/man5/proc.5.html">manpage</a> uses spaces. <a href="#fnref:status-tabs" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
   </ol>
 </div>
@@ -517,19 +517,6 @@ make any sense either, because they are both single values.</p>
           </li>
           
 
-          
-          <li>
-            <a href="https://twitter.com/segfaulthunter">
-              <span class="icon  icon--twitter">
-                <svg viewBox="0 0 16 16">
-                  <path fill="#828282" d="M15.969,3.058c-0.586,0.26-1.217,0.436-1.878,0.515c0.675-0.405,1.194-1.045,1.438-1.809
-                  c-0.632,0.375-1.332,0.647-2.076,0.793c-0.596-0.636-1.446-1.033-2.387-1.033c-1.806,0-3.27,1.464-3.27,3.27 c0,0.256,0.029,0.506,0.085,0.745C5.163,5.404,2.753,4.102,1.14,2.124C0.859,2.607,0.698,3.168,0.698,3.767 c0,1.134,0.577,2.135,1.455,2.722C1.616,6.472,1.112,6.325,0.671,6.08c0,0.014,0,0.027,0,0.041c0,1.584,1.127,2.906,2.623,3.206 C3.02,9.402,2.731,9.442,2.433,9.442c-0.211,0-0.416-0.021-0.615-0.059c0.416,1.299,1.624,2.245,3.055,2.271 c-1.119,0.877-2.529,1.4-4.061,1.4c-0.264,0-0.524-0.015-0.78-0.046c1.447,0.928,3.166,1.469,5.013,1.469 c6.015,0,9.304-4.983,9.304-9.304c0-0.142-0.003-0.283-0.009-0.423C14.976,4.29,15.531,3.714,15.969,3.058z"/>
-                </svg>
-              </span>
-
-              <span class="username">segfaulthunter</span>
-            </a>
-          </li>
           
         </ul>
       </div>

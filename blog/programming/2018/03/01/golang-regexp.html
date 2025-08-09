@@ -90,15 +90,15 @@
   </header>
 
   <article class="post-content">
-    <p><strong>DISCLAIMER</strong>: Let me say this first. Google’s regular expression implementations are known for not implementing features that make them, well, not regular. Both <code class="highlighter-rouge">re2</code> and Golang’s <code class="highlighter-rouge">regexp</code> do not support backreferences. Otherwise, the things done here would be hard, or impossible.</p>
+    <p><strong>DISCLAIMER</strong>: Let me say this first. Google’s regular expression implementations are known for not implementing features that make them, well, not regular. Both <code class="language-plaintext highlighter-rouge">re2</code> and Golang’s <code class="language-plaintext highlighter-rouge">regexp</code> do not support backreferences. Otherwise, the things done here would be hard, or impossible.</p>
 
-<p>I may not be Golang’s biggest fan in general (lack of generics, verbose syntax, simplistic type system, etc), but I’ve written a bunch of it in the last couple of years and found an unexpectedly useful feature. Golang provides a package called <code class="highlighter-rouge">regexp/syntax</code> that proves to be as useful as its documentation is sparse.</p>
+<p>I may not be Golang’s biggest fan in general (lack of generics, verbose syntax, simplistic type system, etc), but I’ve written a bunch of it in the last couple of years and found an unexpectedly useful feature. Golang provides a package called <code class="language-plaintext highlighter-rouge">regexp/syntax</code> that proves to be as useful as its documentation is sparse.</p>
 
-<p>In essence, this package exposes the user to the finite state machines built by the regexp compiler. This can be used to do analyses on regular expressions such as “does this regexp ever match a particular character after matching <code class="highlighter-rouge">n</code> characters?” or “does this regexp match any strings starting with a particular prefix?”. These might sound like constructed examples, but both of them actually popped up in my dayjob.</p>
+<p>In essence, this package exposes the user to the finite state machines built by the regexp compiler. This can be used to do analyses on regular expressions such as “does this regexp ever match a particular character after matching <code class="language-plaintext highlighter-rouge">n</code> characters?” or “does this regexp match any strings starting with a particular prefix?”. These might sound like constructed examples, but both of them actually popped up in my dayjob.</p>
 
 <h1 id="toy-example-loop-detection">Toy Example: Loop detection</h1>
 
-<p>For sake of simplicity, let’s explore a constructed example first in this post: does a regexp match strings of arbitrary length? Or, in more technical terms: is there a loop in the finite state machine? Let’s get right started with the boilerplate of compiling a regular expression into something called a <code class="highlighter-rouge">Prog</code>.</p>
+<p>For sake of simplicity, let’s explore a constructed example first in this post: does a regexp match strings of arbitrary length? Or, in more technical terms: is there a loop in the finite state machine? Let’s get right started with the boilerplate of compiling a regular expression into something called a <code class="language-plaintext highlighter-rouge">Prog</code>.</p>
 
 <figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="n">r</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">syntax</span><span class="o">.</span><span class="n">Parse</span><span class="p">(</span><span class="s">`.*`</span><span class="p">,</span> <span class="n">syntax</span><span class="o">.</span><span class="n">Perl</span><span class="p">)</span>
 <span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
@@ -118,30 +118,30 @@
   2*	alt -&gt; 1, 3
   3	match</code></pre></figure>
 
-<p>What we see here is the textual representation of the <code class="highlighter-rouge">Prog</code> object. It’s a struct containing</p>
+<p>What we see here is the textual representation of the <code class="language-plaintext highlighter-rouge">Prog</code> object. It’s a struct containing</p>
 
 <ul>
-  <li><code class="highlighter-rouge">Inst</code>: list of instructions</li>
-  <li><code class="highlighter-rouge">Start</code>: initial instruction</li>
+  <li><code class="language-plaintext highlighter-rouge">Inst</code>: list of instructions</li>
+  <li><code class="language-plaintext highlighter-rouge">Start</code>: initial instruction</li>
 </ul>
 
-<p><code class="highlighter-rouge">Inst</code> is the type used to represent an instruction. It’s a struct containing:</p>
+<p><code class="language-plaintext highlighter-rouge">Inst</code> is the type used to represent an instruction. It’s a struct containing:</p>
 
 <ul>
-  <li><code class="highlighter-rouge">Op</code>: type of instruction</li>
-  <li><code class="highlighter-rouge">Out</code>: next instruction (except for InstMatch and InstFail, which are terminal instructions)</li>
-  <li><code class="highlighter-rouge">Arg</code>: additional argument to some instructions</li>
+  <li><code class="language-plaintext highlighter-rouge">Op</code>: type of instruction</li>
+  <li><code class="language-plaintext highlighter-rouge">Out</code>: next instruction (except for InstMatch and InstFail, which are terminal instructions)</li>
+  <li><code class="language-plaintext highlighter-rouge">Arg</code>: additional argument to some instructions</li>
 </ul>
 
-<p>For the purposes of this toy example, all we care about is which instructions can follow from a given instruction. For most instructions, that is the instruction referred to in <code class="highlighter-rouge">Out</code>. Let’s introduce the odd ones here:</p>
+<p>For the purposes of this toy example, all we care about is which instructions can follow from a given instruction. For most instructions, that is the instruction referred to in <code class="language-plaintext highlighter-rouge">Out</code>. Let’s introduce the odd ones here:</p>
 
 <ul>
-  <li><code class="highlighter-rouge">InstMatch</code>: successfully match input string. Does not have successor instruction.</li>
-  <li><code class="highlighter-rouge">InstFail</code>: reject input string. Does not have successor instruction.</li>
-  <li><code class="highlighter-rouge">InstAlt</code> / <code class="highlighter-rouge">InstAltMatch</code>: either <code class="highlighter-rouge">Out</code> or <code class="highlighter-rouge">Arg</code> are the successor instruction. A string matches if either of the branches arrives at <code class="highlighter-rouge">InstMatch</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">InstMatch</code>: successfully match input string. Does not have successor instruction.</li>
+  <li><code class="language-plaintext highlighter-rouge">InstFail</code>: reject input string. Does not have successor instruction.</li>
+  <li><code class="language-plaintext highlighter-rouge">InstAlt</code> / <code class="language-plaintext highlighter-rouge">InstAltMatch</code>: either <code class="language-plaintext highlighter-rouge">Out</code> or <code class="language-plaintext highlighter-rouge">Arg</code> are the successor instruction. A string matches if either of the branches arrives at <code class="language-plaintext highlighter-rouge">InstMatch</code>.</li>
 </ul>
 
-<p>If you are curious about the difference between <code class="highlighter-rouge">InstAlt</code> and <code class="highlighter-rouge">InstAltMatch</code>: From all I could determine, <code class="highlighter-rouge">InstAltMatch</code> is an optimisation where it is known that one branch leads to a match while the other branch consumes characters. I do not see the compiler or any rewriting actually using this instruction, so it does not seem to be in use. Most of the implementation treats them interchangeably, while <a href="https://golang.org/src/regexp/backtrack.go?h=InstAltMatch#L181">backtrack.go</a> in the regex evaluator appears to use it to determine which branch to take.</p>
+<p>If you are curious about the difference between <code class="language-plaintext highlighter-rouge">InstAlt</code> and <code class="language-plaintext highlighter-rouge">InstAltMatch</code>: From all I could determine, <code class="language-plaintext highlighter-rouge">InstAltMatch</code> is an optimisation where it is known that one branch leads to a match while the other branch consumes characters. I do not see the compiler or any rewriting actually using this instruction, so it does not seem to be in use. Most of the implementation treats them interchangeably, while <a href="https://golang.org/src/regexp/backtrack.go?h=InstAltMatch#L181">backtrack.go</a> in the regex evaluator appears to use it to determine which branch to take.</p>
 
 <p>This information allows us to implement a helper function to determining the successor instructions, given an instruction.</p>
 
@@ -156,7 +156,7 @@
 	<span class="k">return</span> <span class="n">o</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>Now we can implement loop-detection by a simple breadth-first search, keeping track of already visited nodes in a set (i.e. a <code class="highlighter-rouge">map[uint32]bool</code>, because Golang does not have a set type).</p>
+<p>Now we can implement loop-detection by a simple breadth-first search, keeping track of already visited nodes in a set (i.e. a <code class="language-plaintext highlighter-rouge">map[uint32]bool</code>, because Golang does not have a set type).</p>
 
 <figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span> <span class="n">HasLoop</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span><span class="n">syntax</span><span class="o">.</span><span class="n">Prog</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
 	<span class="k">var</span> <span class="n">tovisit</span> <span class="p">[]</span><span class="kt">uint32</span>
@@ -176,29 +176,29 @@
 
 <h1 id="a-regex-engine">A regex engine</h1>
 
-<p>Now let’s try to build a very inefficient regex engine based on this. To do so, let us first introduce the various rune instructions (rune is Golang for Unicode codepoint). There is <code class="highlighter-rouge">InstRune</code>, <code class="highlighter-rouge">InstRune1</code>, <code class="highlighter-rouge">InstRuneAny</code> and <code class="highlighter-rouge">InstRuneAnyNotNL</code>. Most of them (except <code class="highlighter-rouge">InstRune</code> and <code class="highlighter-rouge">InstRune1</code>) should be self-explanatory, but here’s the whole list:</p>
+<p>Now let’s try to build a very inefficient regex engine based on this. To do so, let us first introduce the various rune instructions (rune is Golang for Unicode codepoint). There is <code class="language-plaintext highlighter-rouge">InstRune</code>, <code class="language-plaintext highlighter-rouge">InstRune1</code>, <code class="language-plaintext highlighter-rouge">InstRuneAny</code> and <code class="language-plaintext highlighter-rouge">InstRuneAnyNotNL</code>. Most of them (except <code class="language-plaintext highlighter-rouge">InstRune</code> and <code class="language-plaintext highlighter-rouge">InstRune1</code>) should be self-explanatory, but here’s the whole list:</p>
 
 <ul>
-  <li><code class="highlighter-rouge">InstRuneAny</code> matches any rune.</li>
-  <li><code class="highlighter-rouge">InstRuneAnyNotNL</code> matches any rune except newlines.</li>
-  <li><code class="highlighter-rouge">InstRune</code> has a <code class="highlighter-rouge">MatchRune</code> method to determine whether it matches a rune.</li>
-  <li><code class="highlighter-rouge">InstRune1</code> matches the rune provided in <code class="highlighter-rouge">i.Rune[0]</code> (obviously.)</li>
+  <li><code class="language-plaintext highlighter-rouge">InstRuneAny</code> matches any rune.</li>
+  <li><code class="language-plaintext highlighter-rouge">InstRuneAnyNotNL</code> matches any rune except newlines.</li>
+  <li><code class="language-plaintext highlighter-rouge">InstRune</code> has a <code class="language-plaintext highlighter-rouge">MatchRune</code> method to determine whether it matches a rune.</li>
+  <li><code class="language-plaintext highlighter-rouge">InstRune1</code> matches the rune provided in <code class="language-plaintext highlighter-rouge">i.Rune[0]</code> (obviously.)</li>
 </ul>
 
 <p>This leaves us with two remaining useful instructions:</p>
 
 <ul>
-  <li><code class="highlighter-rouge">InstCapture</code>: capture a match into a capture group. We won’t bother with this here.</li>
-  <li><code class="highlighter-rouge">InstEmptyWidth</code>: match constrains on the current position in the string. This has a <code class="highlighter-rouge">MatchEmptyWidth</code> to determine whether it matches.</li>
+  <li><code class="language-plaintext highlighter-rouge">InstCapture</code>: capture a match into a capture group. We won’t bother with this here.</li>
+  <li><code class="language-plaintext highlighter-rouge">InstEmptyWidth</code>: match constrains on the current position in the string. This has a <code class="language-plaintext highlighter-rouge">MatchEmptyWidth</code> to determine whether it matches.</li>
 </ul>
 
-<p>There’s also <code class="highlighter-rouge">InstNop</code> which, well, does nothing.</p>
+<p>There’s also <code class="language-plaintext highlighter-rouge">InstNop</code> which, well, does nothing.</p>
 
 <p>Of course, the easiest way to do this is a recursive evaluator. We pass in a program, the current instruction, and input, and the current position in the input.</p>
 
 <figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span> <span class="n">Match</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span><span class="n">syntax</span><span class="o">.</span><span class="n">Prog</span><span class="p">,</span> <span class="n">pc</span> <span class="kt">uint32</span><span class="p">,</span> <span class="n">input</span> <span class="p">[]</span><span class="kt">rune</span><span class="p">,</span> <span class="n">idx</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span></code></pre></figure>
 
-<p>Let’s first determine the previous and current rune at the current position, and use <code class="highlighter-rouge">-1</code> for the borders of the string (to be consistent with <code class="highlighter-rouge">MatchEmptyWidth</code>).</p>
+<p>Let’s first determine the previous and current rune at the current position, and use <code class="language-plaintext highlighter-rouge">-1</code> for the borders of the string (to be consistent with <code class="language-plaintext highlighter-rouge">MatchEmptyWidth</code>).</p>
 
 <figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">var</span> <span class="n">prev</span> <span class="kt">rune</span> <span class="o">=</span> <span class="o">-</span><span class="m">1</span>
 	<span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="m">0</span> <span class="o">&amp;&amp;</span> <span class="n">idx</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">input</span><span class="p">)</span> <span class="p">{</span>
@@ -211,7 +211,7 @@
 
 <p>And now all that’s left is one fairly large switch (if you look at actual implementations of regex engines, there are also often giant switches, so it’s legit).</p>
 
-<p><code class="highlighter-rouge">InstAlt</code> and <code class="highlighter-rouge">InstAltMatch</code> are the same, so let’s use the <code class="highlighter-rouge">fallthrough</code> statement for go switch statements (this is much more sane than C-style fallthrough by default).</p>
+<p><code class="language-plaintext highlighter-rouge">InstAlt</code> and <code class="language-plaintext highlighter-rouge">InstAltMatch</code> are the same, so let’s use the <code class="language-plaintext highlighter-rouge">fallthrough</code> statement for go switch statements (this is much more sane than C-style fallthrough by default).</p>
 
 <figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="n">i</span> <span class="o">:=</span> <span class="n">p</span><span class="o">.</span><span class="n">Inst</span><span class="p">[</span><span class="n">pc</span><span class="p">]</span>
 	<span class="k">switch</span> <span class="n">i</span><span class="o">.</span><span class="n">Op</span> <span class="p">{</span>
@@ -220,14 +220,14 @@
 	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstAltMatch</span><span class="o">:</span>
 		<span class="k">return</span> <span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span> <span class="o">||</span> <span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Arg</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></code></pre></figure>
 
-<p>We don’t care about <code class="highlighter-rouge">InstCapture</code> or <code class="highlighter-rouge">InstNop</code> here.</p>
+<p>We don’t care about <code class="language-plaintext highlighter-rouge">InstCapture</code> or <code class="language-plaintext highlighter-rouge">InstNop</code> here.</p>
 
 <figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstNop</span><span class="o">:</span>
 		<span class="k">fallthrough</span>
 	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstCapture</span><span class="o">:</span>
 		<span class="k">return</span> <span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></code></pre></figure>
 
-<p>For <code class="highlighter-rouge">InstEmptyWidth</code> we use the method that was given to us for this.</p>
+<p>For <code class="language-plaintext highlighter-rouge">InstEmptyWidth</code> we use the method that was given to us for this.</p>
 
 <figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstEmptyWidth</span><span class="o">:</span>
 		<span class="k">if</span> <span class="o">!</span><span class="n">i</span><span class="o">.</span><span class="n">MatchEmptyWidth</span><span class="p">(</span><span class="n">prev</span><span class="p">,</span> <span class="n">cur</span><span class="p">)</span> <span class="p">{</span>
@@ -235,7 +235,7 @@
 		<span class="p">}</span>
 		<span class="k">return</span> <span class="n">Match</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></code></pre></figure>
 
-<p>(I could get used to this). <code class="highlighter-rouge">InstMatch</code> and <code class="highlighter-rouge">InstFail</code> are obvious.</p>
+<p>(I could get used to this). <code class="language-plaintext highlighter-rouge">InstMatch</code> and <code class="language-plaintext highlighter-rouge">InstFail</code> are obvious.</p>
 
 <figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstMatch</span><span class="o">:</span>
 		<span class="k">return</span> <span class="no">true</span>
@@ -279,11 +279,11 @@
 
 <p>Now that we can proudly proclaim we have written a regular expression engine (well, maybe we were <em>slightly</em> cheating and someone else helped <em>a bit</em>), let’s take up a bigger challenge. Given a regular expression that possibly matches arbitrarily length strings, determine whether all strings matched have an even size. Sounds like an interview question? A bit, but I also hope I’ll never get this as an actual interview question.</p>
 
-<p>Let’s start with a similar prototype as for our <code class="highlighter-rouge">Match</code> function, but instead of our input let’s have something that flips around whether we are at an even or odd step. For reasons that will make sense later, let’s encode this as an integer that flips between <code class="highlighter-rouge">0</code> and <code class="highlighter-rouge">1</code> (so it’s <code class="highlighter-rouge">idx % 2</code>). We also need to keep track of which nodes we have seen before, or we will wait for a long time. But if you think about it a bit, we need to keep track of this for even and odd steps, an even visit and an odd visit are not the same. That results in the beautiful type of <code class="highlighter-rouge">map[int]map[uint32]bool</code>, or a map from an integer to a set of <code class="highlighter-rouge">uint32</code>.</p>
+<p>Let’s start with a similar prototype as for our <code class="language-plaintext highlighter-rouge">Match</code> function, but instead of our input let’s have something that flips around whether we are at an even or odd step. For reasons that will make sense later, let’s encode this as an integer that flips between <code class="language-plaintext highlighter-rouge">0</code> and <code class="language-plaintext highlighter-rouge">1</code> (so it’s <code class="language-plaintext highlighter-rouge">idx % 2</code>). We also need to keep track of which nodes we have seen before, or we will wait for a long time. But if you think about it a bit, we need to keep track of this for even and odd steps, an even visit and an odd visit are not the same. That results in the beautiful type of <code class="language-plaintext highlighter-rouge">map[int]map[uint32]bool</code>, or a map from an integer to a set of <code class="language-plaintext highlighter-rouge">uint32</code>.</p>
 
 <figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span> <span class="n">Even</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span><span class="n">syntax</span><span class="o">.</span><span class="n">Prog</span><span class="p">,</span> <span class="n">pc</span> <span class="kt">uint32</span><span class="p">,</span> <span class="n">idx</span> <span class="kt">int</span><span class="p">,</span> <span class="k">map</span><span class="p">[</span><span class="kt">int</span><span class="p">]</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span></code></pre></figure>
 
-<p>Now let’s start with the easy part. I literally copy &amp; pasted the <code class="highlighter-rouge">Match</code> code, removed all the stuff that actually does any … matching, plumbed through the visited map and made <code class="highlighter-rouge">idx</code> mod 2. That gives us all the rune instructions and <code class="highlighter-rouge">InstCapture</code>, <code class="highlighter-rouge">InstNop</code> and <code class="highlighter-rouge">InstEmptyWidth</code> (which are all, for all intents and purposes, noop).</p>
+<p>Now let’s start with the easy part. I literally copy &amp; pasted the <code class="language-plaintext highlighter-rouge">Match</code> code, removed all the stuff that actually does any … matching, plumbed through the visited map and made <code class="language-plaintext highlighter-rouge">idx</code> mod 2. That gives us all the rune instructions and <code class="language-plaintext highlighter-rouge">InstCapture</code>, <code class="language-plaintext highlighter-rouge">InstNop</code> and <code class="language-plaintext highlighter-rouge">InstEmptyWidth</code> (which are all, for all intents and purposes, noop).</p>
 
 <figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="n">i</span> <span class="o">:=</span> <span class="n">p</span><span class="o">.</span><span class="n">Inst</span><span class="p">[</span><span class="n">pc</span><span class="p">]</span>
 	<span class="k">switch</span> <span class="n">i</span><span class="o">.</span><span class="n">Op</span> <span class="p">{</span>
@@ -302,14 +302,14 @@
 	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstRuneAnyNotNL</span><span class="o">:</span>
 		<span class="k">return</span> <span class="n">Even</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span> <span class="p">(</span><span class="n">idx</span><span class="o">+</span><span class="m">1</span><span class="p">)</span><span class="o">%</span><span class="m">2</span><span class="p">,</span> <span class="n">visited</span><span class="p">)</span></code></pre></figure>
 
-<p><code class="highlighter-rouge">InstMatch</code> is straightforward, as we just have to check whether we are at an even step. <code class="highlighter-rouge">InstFail</code> confusingly returns <code class="highlighter-rouge">true</code>, as we do not care about branches that do not lead to matches.</p>
+<p><code class="language-plaintext highlighter-rouge">InstMatch</code> is straightforward, as we just have to check whether we are at an even step. <code class="language-plaintext highlighter-rouge">InstFail</code> confusingly returns <code class="language-plaintext highlighter-rouge">true</code>, as we do not care about branches that do not lead to matches.</p>
 
 <figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstMatch</span><span class="o">:</span>
 		<span class="k">return</span> <span class="n">idx</span> <span class="o">==</span> <span class="m">0</span>
 	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstFail</span><span class="o">:</span>
 		<span class="k">return</span> <span class="no">true</span> </code></pre></figure>
 
-<p>Now to one of my least favourite parts of Golang, copying nested maps. But here we go. Let’s introduce a helper method, as when we branch for <code class="highlighter-rouge">InstAlt</code> we will need a separate ropy of the visited map for both branches.</p>
+<p>Now to one of my least favourite parts of Golang, copying nested maps. But here we go. Let’s introduce a helper method, as when we branch for <code class="language-plaintext highlighter-rouge">InstAlt</code> we will need a separate ropy of the visited map for both branches.</p>
 
 <figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span> <span class="n">copyVisited</span><span class="p">(</span><span class="n">visited</span> <span class="k">map</span><span class="p">[</span><span class="kt">int</span><span class="p">]</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="p">)</span> <span class="k">map</span><span class="p">[</span><span class="kt">int</span><span class="p">]</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span> <span class="p">{</span>
 	<span class="n">n</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="k">map</span><span class="p">[</span><span class="kt">int</span><span class="p">]</span><span class="k">map</span><span class="p">[</span><span class="kt">uint32</span><span class="p">]</span><span class="kt">bool</span><span class="p">)</span>
@@ -324,7 +324,7 @@
 	<span class="k">return</span> <span class="n">n</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>OK, with that out of the way, we can tackle the <code class="highlighter-rouge">InstAlt</code> instructions.</p>
+<p>OK, with that out of the way, we can tackle the <code class="language-plaintext highlighter-rouge">InstAlt</code> instructions.</p>
 
 <figure class="highlight"><pre><code class="language-go" data-lang="go">	<span class="k">case</span> <span class="n">syntax</span><span class="o">.</span><span class="n">InstAlt</span><span class="o">:</span>
 		<span class="k">fallthrough</span>
@@ -332,7 +332,7 @@
 		<span class="n">branchvisited</span> <span class="o">:=</span> <span class="n">copyVisited</span><span class="p">(</span><span class="n">visited</span><span class="p">)</span>
 		<span class="k">return</span> <span class="n">Even</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Out</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">visited</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">Even</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">Arg</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">branchvisited</span><span class="p">)</span></code></pre></figure>
 
-<p>This one is different, as we want to make sure we can <em>only</em> match even length strings, so we need to <code class="highlighter-rouge">&amp;&amp;</code> the conditions, rather than <code class="highlighter-rouge">||</code> them.</p>
+<p>This one is different, as we want to make sure we can <em>only</em> match even length strings, so we need to <code class="language-plaintext highlighter-rouge">&amp;&amp;</code> the conditions, rather than <code class="language-plaintext highlighter-rouge">||</code> them.</p>
 
 <p>Due diligence again.</p>
 
@@ -341,7 +341,7 @@
 	<span class="p">}</span>
 	<span class="nb">panic</span><span class="p">(</span><span class="s">"Fell off the switch."</span><span class="p">)</span></code></pre></figure>
 
-<p>If we stop for a second to see what we’ve built, it’s obvious we’ve built a potential infinite loop. Let’s rectify this. If we arrive back at an instruction that we’ve been before with the same <code class="highlighter-rouge">idx % 2</code>, we can just prune this branch and return <code class="highlighter-rouge">true</code> as it is exactly the same.</p>
+<p>If we stop for a second to see what we’ve built, it’s obvious we’ve built a potential infinite loop. Let’s rectify this. If we arrive back at an instruction that we’ve been before with the same <code class="language-plaintext highlighter-rouge">idx % 2</code>, we can just prune this branch and return <code class="language-plaintext highlighter-rouge">true</code> as it is exactly the same.</p>
 
 <p>So let’s prepend our switch statement with the following.</p>
 
@@ -356,9 +356,9 @@
 	<span class="p">}</span>
 	<span class="n">visited</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="n">pc</span><span class="p">]</span> <span class="o">=</span> <span class="no">true</span></code></pre></figure>
 
-<p>And that’s done! To see the whole code used in this post head of to this <a href="https://gist.github.com/segfaulthunter/25a8fb5502ebddd413c00eada4ff18bf">Github Gist</a>.</p>
+<p>And that’s done! To see the whole code used in this post head of to this <a href="https://gist.github.com/fmayer/25a8fb5502ebddd413c00eada4ff18bf">Github Gist</a>.</p>
 
-<p>If you have made it this far, it is probably also worth noting that the Z3 SMT solver has a <a href="https://rise4fun.com/z3/tutorialcontent/sequences#h23">Regex Theory</a>. The last time I’ve played with it it was giving obviously incorrect answers, but that seems to have been rectified since. The nice thing about <code class="highlighter-rouge">regexp/syntax</code> is that it uses the same library your application uses if you write it in Golang, and can be used in programs with more predictable performance and fewer dependencies than Z3.</p>
+<p>If you have made it this far, it is probably also worth noting that the Z3 SMT solver has a <a href="https://rise4fun.com/z3/tutorialcontent/sequences#h23">Regex Theory</a>. The last time I’ve played with it it was giving obviously incorrect answers, but that seems to have been rectified since. The nice thing about <code class="language-plaintext highlighter-rouge">regexp/syntax</code> is that it uses the same library your application uses if you write it in Golang, and can be used in programs with more predictable performance and fewer dependencies than Z3.</p>
 
   </article>
 
@@ -397,19 +397,6 @@
           </li>
           
 
-          
-          <li>
-            <a href="https://twitter.com/segfaulthunter">
-              <span class="icon  icon--twitter">
-                <svg viewBox="0 0 16 16">
-                  <path fill="#828282" d="M15.969,3.058c-0.586,0.26-1.217,0.436-1.878,0.515c0.675-0.405,1.194-1.045,1.438-1.809
-                  c-0.632,0.375-1.332,0.647-2.076,0.793c-0.596-0.636-1.446-1.033-2.387-1.033c-1.806,0-3.27,1.464-3.27,3.27 c0,0.256,0.029,0.506,0.085,0.745C5.163,5.404,2.753,4.102,1.14,2.124C0.859,2.607,0.698,3.168,0.698,3.767 c0,1.134,0.577,2.135,1.455,2.722C1.616,6.472,1.112,6.325,0.671,6.08c0,0.014,0,0.027,0,0.041c0,1.584,1.127,2.906,2.623,3.206 C3.02,9.402,2.731,9.442,2.433,9.442c-0.211,0-0.416-0.021-0.615-0.059c0.416,1.299,1.624,2.245,3.055,2.271 c-1.119,0.877-2.529,1.4-4.061,1.4c-0.264,0-0.524-0.015-0.78-0.046c1.447,0.928,3.166,1.469,5.013,1.469 c6.015,0,9.304-4.983,9.304-9.304c0-0.142-0.003-0.283-0.009-0.423C14.976,4.29,15.531,3.714,15.969,3.058z"/>
-                </svg>
-              </span>
-
-              <span class="username">segfaulthunter</span>
-            </a>
-          </li>
           
         </ul>
       </div>

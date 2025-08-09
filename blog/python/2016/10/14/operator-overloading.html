@@ -94,30 +94,30 @@
 allowed the user to build up logical formulas while always keeping them in CNF (conjunctive
 normal form – that is, a logical formula where the outermost connective is always a conjunction).</p>
 
-<p>This was done by building a class hierarchy with an abstract class <code class="highlighter-rouge">Expr</code> on the top level,
-two classes <code class="highlighter-rouge">ExprAnd</code> and <code class="highlighter-rouge">ExprOr</code> that represent conjunction and disjunction respectively and
-both contain lists of <code class="highlighter-rouge">Expr</code>. Various other classes where used to represent various atoms of
+<p>This was done by building a class hierarchy with an abstract class <code class="language-plaintext highlighter-rouge">Expr</code> on the top level,
+two classes <code class="language-plaintext highlighter-rouge">ExprAnd</code> and <code class="language-plaintext highlighter-rouge">ExprOr</code> that represent conjunction and disjunction respectively and
+both contain lists of <code class="language-plaintext highlighter-rouge">Expr</code>. Various other classes where used to represent various atoms of
 the formulas, the particular code was about solar physics so the atoms happen to be things like
-<code class="highlighter-rouge">Wavelength(x, y)</code> for selecting observations of a particular wavelength.</p>
+<code class="language-plaintext highlighter-rouge">Wavelength(x, y)</code> for selecting observations of a particular wavelength.</p>
 
-<p>The base class <code class="highlighter-rouge">Expr</code> defines <code class="highlighter-rouge">__and__</code> and <code class="highlighter-rouge">__or__</code>, that is the methods that need to be
-implemented to overload the <code class="highlighter-rouge">&amp;</code> and <code class="highlighter-rouge">|</code> operations that just return <code class="highlighter-rouge">ExprAnd</code> and <code class="highlighter-rouge">ExprOr</code>
+<p>The base class <code class="language-plaintext highlighter-rouge">Expr</code> defines <code class="language-plaintext highlighter-rouge">__and__</code> and <code class="language-plaintext highlighter-rouge">__or__</code>, that is the methods that need to be
+implemented to overload the <code class="language-plaintext highlighter-rouge">&amp;</code> and <code class="language-plaintext highlighter-rouge">|</code> operations that just return <code class="language-plaintext highlighter-rouge">ExprAnd</code> and <code class="language-plaintext highlighter-rouge">ExprOr</code>
 of the object and the left hand operand.</p>
 
-<p><code class="highlighter-rouge">ExprAnd</code> and <code class="highlighter-rouge">ExprOr</code> also implement the operation corresponding to their node type
-by just returning a new <code class="highlighter-rouge">ExprAnd</code> or <code class="highlighter-rouge">ExprOr</code> with the left hand operand added to the
-list, respectively. They also implement <code class="highlighter-rouge">__rand__</code> and <code class="highlighter-rouge">__ror__</code>, so their special implementation
+<p><code class="language-plaintext highlighter-rouge">ExprAnd</code> and <code class="language-plaintext highlighter-rouge">ExprOr</code> also implement the operation corresponding to their node type
+by just returning a new <code class="language-plaintext highlighter-rouge">ExprAnd</code> or <code class="language-plaintext highlighter-rouge">ExprOr</code> with the left hand operand added to the
+list, respectively. They also implement <code class="language-plaintext highlighter-rouge">__rand__</code> and <code class="language-plaintext highlighter-rouge">__ror__</code>, so their special implementation
 is also applied if they are used at the right hand side of the operation – or that was the plan.
-<code class="highlighter-rouge">ExprAnd</code> commutes <code class="highlighter-rouge">|</code> operations into the conjuction to keep conjunction as the top level
+<code class="language-plaintext highlighter-rouge">ExprAnd</code> commutes <code class="language-plaintext highlighter-rouge">|</code> operations into the conjuction to keep conjunction as the top level
 connective.</p>
 
-<p>The problem that I asked to help with was that <code class="highlighter-rouge">foo &amp; (bar &amp; baz)</code> did not seem to evaluate into
-<code class="highlighter-rouge">ExprAnd(foo, bar, baz)</code>, but rather <code class="highlighter-rouge">ExprAnd(foo, ExprAnd(bar, baz))</code>, that is, the automatic
+<p>The problem that I asked to help with was that <code class="language-plaintext highlighter-rouge">foo &amp; (bar &amp; baz)</code> did not seem to evaluate into
+<code class="language-plaintext highlighter-rouge">ExprAnd(foo, bar, baz)</code>, but rather <code class="language-plaintext highlighter-rouge">ExprAnd(foo, ExprAnd(bar, baz))</code>, that is, the automatic
 transformation to CNF was not working.</p>
 
-<p>Python actually implements logic that when you have an operation <code class="highlighter-rouge">foo &amp; bar</code> where the type of
-<code class="highlighter-rouge">bar</code> is a subclass of the type of <code class="highlighter-rouge">foo</code> and implements its own version of <code class="highlighter-rouge">__rand__</code>, the
-expression will be evaluating using that. So when you read <code class="highlighter-rouge">__rand__</code> (or any of the operators)
+<p>Python actually implements logic that when you have an operation <code class="language-plaintext highlighter-rouge">foo &amp; bar</code> where the type of
+<code class="language-plaintext highlighter-rouge">bar</code> is a subclass of the type of <code class="language-plaintext highlighter-rouge">foo</code> and implements its own version of <code class="language-plaintext highlighter-rouge">__rand__</code>, the
+expression will be evaluating using that. So when you read <code class="language-plaintext highlighter-rouge">__rand__</code> (or any of the operators)
 is used of the left hand side does not implement the operator, that is wrong. For instance,</p>
 
 <figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="n">In</span> <span class="p">[</span><span class="mi">18</span><span class="p">]:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -133,8 +133,8 @@ is used of the left hand side does not implement the operator, that is wrong. Fo
 <span class="n">In</span> <span class="p">[</span><span class="mi">20</span><span class="p">]:</span> <span class="n">Foo</span><span class="p">()</span> <span class="o">+</span> <span class="n">Qux</span><span class="p">()</span>
 <span class="n">Qux</span>  <span class="o">&lt;</span><span class="n">__main__</span><span class="p">.</span><span class="n">Qux</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f9f750</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">__main__</span><span class="p">.</span><span class="n">Foo</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f7e510</span><span class="o">&gt;</span></code></pre></figure>
 
-<p>This behaviour was what I was aiming to exploit by making <code class="highlighter-rouge">ExprAnd</code> (for instance) implement
-both <code class="highlighter-rouge">__and__</code> and <code class="highlighter-rouge">__rand__</code> and make Python use the most specific implementation. Sadly, it
+<p>This behaviour was what I was aiming to exploit by making <code class="language-plaintext highlighter-rouge">ExprAnd</code> (for instance) implement
+both <code class="language-plaintext highlighter-rouge">__and__</code> and <code class="language-plaintext highlighter-rouge">__rand__</code> and make Python use the most specific implementation. Sadly, it
 does not work this way. If you now introduce a third class that inherits from Foo and does not
 implement either of the methods itself, the base class’ will be used, for instance</p>
 
@@ -144,7 +144,7 @@ implement either of the methods itself, the base class’ will be used, for inst
 <span class="n">In</span> <span class="p">[</span><span class="mi">22</span><span class="p">]:</span> <span class="n">Bar</span><span class="p">()</span> <span class="o">+</span> <span class="n">Qux</span><span class="p">()</span>
 <span class="n">Foo</span>  <span class="o">&lt;</span><span class="n">__main__</span><span class="p">.</span><span class="n">Bar</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f80890</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">__main__</span><span class="p">.</span><span class="n">Qux</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x112f93a90</span><span class="o">&gt;</span></code></pre></figure>
 
-<p>The semantics of Python operator overloading will <em>only</em> prefer the <code class="highlighter-rouge">__rand__</code> method of the
+<p>The semantics of Python operator overloading will <em>only</em> prefer the <code class="language-plaintext highlighter-rouge">__rand__</code> method of the
 right hand side if it is an object of a subclass of the <em>type of the right hand side object</em>.
 Note that this does not take into account in which class the implementation of the left hand side
 was actually done, which explains the behaviour above.</p>
@@ -169,7 +169,7 @@ in an object).</p>
 <p>To implement this, first we define a functions to get all functions. It is important to know
 that the function is different to the unbound and bound method object and does not contain
 information about which class it is contained in; the function object can be obtained from
-an unbound method object by using <code class="highlighter-rouge">im_func</code>.</p>
+an unbound method object by using <code class="language-plaintext highlighter-rouge">im_func</code>.</p>
 
 <figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="kn">import</span> <span class="nn">inspect</span>
 
@@ -199,7 +199,7 @@ same to prevent an infinite loop.</p>
     <span class="k">return</span> <span class="n">func</span></code></pre></figure>
 
 <p>If we use the decorator on a slightly modified version of the previous example
-(we use <code class="highlighter-rouge">__add__</code> instead of <code class="highlighter-rouge">__radd__</code> because the decorator assumes commutativity
+(we use <code class="language-plaintext highlighter-rouge">__add__</code> instead of <code class="language-plaintext highlighter-rouge">__radd__</code> because the decorator assumes commutativity
 and uses the same operations on both sides).</p>
 
 <figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="n">In</span> <span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -262,19 +262,6 @@ and uses the same operations on both sides).</p>
           </li>
           
 
-          
-          <li>
-            <a href="https://twitter.com/segfaulthunter">
-              <span class="icon  icon--twitter">
-                <svg viewBox="0 0 16 16">
-                  <path fill="#828282" d="M15.969,3.058c-0.586,0.26-1.217,0.436-1.878,0.515c0.675-0.405,1.194-1.045,1.438-1.809
-                  c-0.632,0.375-1.332,0.647-2.076,0.793c-0.596-0.636-1.446-1.033-2.387-1.033c-1.806,0-3.27,1.464-3.27,3.27 c0,0.256,0.029,0.506,0.085,0.745C5.163,5.404,2.753,4.102,1.14,2.124C0.859,2.607,0.698,3.168,0.698,3.767 c0,1.134,0.577,2.135,1.455,2.722C1.616,6.472,1.112,6.325,0.671,6.08c0,0.014,0,0.027,0,0.041c0,1.584,1.127,2.906,2.623,3.206 C3.02,9.402,2.731,9.442,2.433,9.442c-0.211,0-0.416-0.021-0.615-0.059c0.416,1.299,1.624,2.245,3.055,2.271 c-1.119,0.877-2.529,1.4-4.061,1.4c-0.264,0-0.524-0.015-0.78-0.046c1.447,0.928,3.166,1.469,5.013,1.469 c6.015,0,9.304-4.983,9.304-9.304c0-0.142-0.003-0.283-0.009-0.423C14.976,4.29,15.531,3.714,15.969,3.058z"/>
-                </svg>
-              </span>
-
-              <span class="username">segfaulthunter</span>
-            </a>
-          </li>
           
         </ul>
       </div>
