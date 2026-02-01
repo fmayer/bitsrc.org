@@ -1,162 +1,18 @@
-<!DOCTYPE html>
-<html>
-
-  <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <title>A Paper a Week-ish #10: In Search of an Understandable Consensus Algorithm</title>
-  <meta name="description" content="I have been meaning to read this paper for quite some time, but for some reason, even though its entire point is proposing an understandable consensus algori...">
-
-  <link rel="stylesheet" href="/blog/css/main.css">
-  <link rel="canonical" href="https://bitsrc.org/blog/apaw/2015/07/06/a-paper-a-week-understandable-consensus.html">
-  <link rel="alternate" type="application/rss+xml" title="Strings over Σ" href="https://bitsrc.org/blog/feed.xml" />
-<script type="text/javascript"
-    src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-</script>
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Config({
-    showProcessingMessages: false,
-    messageStyle: 'none',
-    // show equation numbers
-    TeX: {
-      equationNumbers: {
-        autoNumber: "AMS"
-      }
-    },
-    'HTML-CSS': {
-      imageFont: null
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Redirect</title>
+  <script type="text/javascript">
+    var redirects = {"":"../../../../2015/07/06/a-paper-a-week-understandable-consensus.html"};
+    var hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
+    var redirect = redirects[hash] || redirects[""] || "/";
+    window.document.title = 'Redirect to  ' +  redirect;
+    if (!redirects[hash]) {
+      redirect = redirect + window.location.hash;
     }
-  });
-</script>
-<script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-60512974-2', 'auto');
-  ga('send', 'pageview');
-
-</script>
+    redirect = redirect + window.location.search;
+    window.location.replace(redirect);
+  </script>
 </head>
-
-
-  <body>
-
-    <header class="site-header">
-
-  <div class="wrapper">
-
-    <a class="site-title" href="/blog/">Strings over Σ</a>
-
-    <nav class="site-nav">
-      <a href="#" class="menu-icon">
-        <svg viewBox="0 0 18 15">
-          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
-          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
-          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
-        </svg>
-      </a>
-
-      <div class="trigger">
-        
-          
-          <a class="page-link" href="/blog/about/">About</a>
-          
-        
-          
-        
-          
-        
-          
-        
-      </div>
-    </nav>
-
-  </div>
-
-</header>
-
-
-    <div class="page-content">
-      <div class="wrapper">
-        <div class="post">
-
-  <header class="post-header">
-    <h1 class="post-title">A Paper a Week-ish #10: In Search of an Understandable Consensus Algorithm</h1>
-    <p class="post-meta">Jul 6, 2015</p>
-  </header>
-
-  <article class="post-content">
-    <p>I have been meaning to read this paper for quite some time, but for some reason, even though its entire point is proposing an <em>understandable</em> consensus algorithm, Paxos’ (the canonical consensus algorithm previous to this paper) reputation for being impossible to understand kept me from reading this paper whenever I was short on time – that is to say always. Probably I was assuming that an “understandable” replacement for an impossible-to-understand is still very hard to grasp and I would not have time to properly digest it. Thankfully, I could not have been wronger.</p>
-
-<p>Raft, the algorithm proposed in the paper, is a solution to the replicated state machine problem. The basic premise thereof is a cluster of computers running independently but working together in what appears to be a single consistent state machine. Without auxiliary conditions, this is a quite simple goal to achieve: one could simply choose one of these computers to actually do the work and leave the rest idle. Of course this is not the point of the exercise, so we want the state machine to be available as long as the majority of these computers is still up, while still giving only correct result. The paper refers to these properties as <em>availability</em> and <em>safety</em>, respectively.</p>
-
-<p>The problem is simplified vastly by requiring that one of these computers is master at any given time, and clients only talking to this master. This is achieved by a fairly simple protocol where, upon detecting the current master has failed, a server initiates an election by talking to all other servers, asking them to vote for it. Other servers will vote only for other servers that are more up-to-date. If more than half of the servers vote for it, it becomes the new master. The protocol also shows that simplicity was the main design goal of Raft: to prevent servers from competing for the vote, which may lead to elections that need to be repeated for lack of winner, the server simply waits for a random time before calling the election, which makes it unlikely that two or more servers do so at the same time.</p>
-
-<p>This server is then responsible for dealing with users requests. If a user wants to update the state, this change is written into the so-called log of the master and replicated onto the other servers called followers. Under normal operation, it will be considered to be committed and persistently in the system when it is written to more than half of the cluster (some caveats apply). Any data that was committed will be available as long as more than half the servers are up at any given point. The master always makes sure that when writing an entry on another server, the entry immediately before the one written matches the one in its logs. By induction, this means the follower’s log is complete up to the newly written entry.</p>
-
-<p>If any of the servers except the master fails, nothing interesting happens. The master will just no longer be able to talk to it, it will no longer write data, but updates will be resent in case it comes back. Simple failover on master failure is equally straightforward. The master dies, the remaining servers elect a new master that has the same state as the previous master (because, remember that the updates are replicated to more than half of the servers). This new master takes the place of the old one, and nothing particularly interesting happens either.</p>
-
-<p>Of course, no one would care if the paper was simply about trivial failover. The interesting case arises, of course, due to more complicated series of master failures. But because of the simplicity of the algorithm this is, in fact, not much harder to understand than the trivial cases above. In this blog-post I have hand-waved “more up to date“ and “committed” a bit earlier, these two concepts are important to understand the general case. All log entries are identified by two integers: the term (the term increases every time the mastership changes), and a sequence number within that term. A server can only win the mastership election if either its term is higher than more than half of the others, or it is in the same term but has a longer (or equally long) log in it. This makes sure that the elected master always has a complete log of committed entries. An entry is committed only after the current master has written a log-entry in its term to ensure that more than half of the followers catch up with the master.</p>
-
-<p>Find the paper here: <a href="https://ramcloud.stanford.edu/raft.pdf" title="Raft Algorithm Paper">Raft Algorithm Paper</a>.</p>
-
-
-  </article>
-
-</div>
-
-      </div>
-    </div>
-
-    <footer class="site-footer">
-
-  <div class="wrapper">
-
-    <h2 class="footer-heading">Strings over Σ</h2>
-
-    <div class="footer-col-wrapper">
-      <div class="footer-col  footer-col-1">
-        <ul class="contact-list">
-          <li>Strings over Σ</li>
-          <li><a href="mailto:blog@bitsrc.org">blog@bitsrc.org</a></li>
-        </ul>
-      </div>
-
-      <div class="footer-col  footer-col-2">
-        <ul class="social-media-list">
-          
-          <li>
-            <a href="https://github.com/fmayer">
-              <span class="icon  icon--github">
-                <svg viewBox="0 0 16 16">
-                  <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
-                </svg>
-              </span>
-
-              <span class="username">fmayer</span>
-            </a>
-          </li>
-          
-
-          
-        </ul>
-      </div>
-
-      <div class="footer-col  footer-col-3">
-        <p class="text">A blog about computer science, logic and programming. Occasionally other topics reasonably consistent with the rest.
-</p>
-      </div>
-    </div>
-
-  </div>
-
-</footer>
-
-
-  </body>
-
+<body>
+</body>
 </html>

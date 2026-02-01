@@ -1,537 +1,771 @@
 <!DOCTYPE html>
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
-  <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
 
-  <title>Linux: The good, the bad and the ugly</title>
-  <meta name="description" content="I’ve been working on system-level software for Linux for some time now,which is a job that makes you much more likely to encounter the odd cornerof an operat...">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-  <link rel="stylesheet" href="/blog/css/main.css">
-  <link rel="canonical" href="https://bitsrc.org/blog/2020/04/19/linux-the-good-the-bad-and-the-ugly.html">
-  <link rel="alternate" type="application/rss+xml" title="Strings over Σ" href="https://bitsrc.org/blog/feed.xml" />
-<script type="text/javascript"
-    src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-</script>
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Config({
-    showProcessingMessages: false,
-    messageStyle: 'none',
-    // show equation numbers
-    TeX: {
-      equationNumbers: {
-        autoNumber: "AMS"
-      }
-    },
-    'HTML-CSS': {
-      imageFont: null
-    }
-  });
-</script>
-<script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+<meta name="dcterms.date" content="2020-04-19">
 
-  ga('create', 'UA-60512974-2', 'auto');
-  ga('send', 'pageview');
+<title>Linux: The good, the bad and the ugly – Strings over Σ</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
 
-</script>
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<link href="../../../favicon.ico" rel="icon">
+<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap-b3b235ae6ba71d6e5c2a90c00144237d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../../styles.css">
 </head>
 
+<body class="nav-fixed quarto-light">
 
-  <body>
-
-    <header class="site-header">
-
-  <div class="wrapper">
-
-    <a class="site-title" href="/blog/">Strings over Σ</a>
-
-    <nav class="site-nav">
-      <a href="#" class="menu-icon">
-        <svg viewBox="0 0 18 15">
-          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
-          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
-          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
-        </svg>
-      </a>
-
-      <div class="trigger">
-        
-          
-          <a class="page-link" href="/blog/about/">About</a>
-          
-        
-          
-        
-          
-        
-          
-        
-      </div>
-    </nav>
-
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../../index.html">
+    <span class="navbar-title">Strings over Σ</span>
+    </a>
   </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/fmayer"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="../../../index.xml"> <i class="bi bi-rss" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#everything-ish-is-a-file-ish" id="toc-everything-ish-is-a-file-ish" class="nav-link active" data-scroll-target="#everything-ish-is-a-file-ish">Everything-ish is a file-ish</a></li>
+  <li><a href="#quiz" id="toc-quiz" class="nav-link" data-scroll-target="#quiz">“Everything is bytes\0”</a></li>
+  <li><a href="#manything-is-a-race" id="toc-manything-is-a-race" class="nav-link" data-scroll-target="#manything-is-a-race">Manything is a race</a></li>
+  <li><a href="#for-forks-sake" id="toc-for-forks-sake" class="nav-link" data-scroll-target="#for-forks-sake">For fork’s sake</a></li>
+  <li><a href="#enosys" id="toc-enosys" class="nav-link" data-scroll-target="#enosys">ENOSYS</a></li>
+  <li><a href="#standards" id="toc-standards" class="nav-link" data-scroll-target="#standards">Standards</a></li>
+  <li><a href="#errno" id="toc-errno" class="nav-link" data-scroll-target="#errno">Errno</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
+  <li><a href="#quiz-results" id="toc-quiz-results" class="nav-link" data-scroll-target="#quiz-results">EBNF results</a></li>
+  <li><a href="#endnotes" id="toc-endnotes" class="nav-link" data-scroll-target="#endnotes">Endnotes</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Linux: The good, the bad and the ugly</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">April 19, 2020</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
 
 </header>
 
 
-    <div class="page-content">
-      <div class="wrapper">
-        <div class="post">
-
-  <header class="post-header">
-    <h1 class="post-title">Linux: The good, the bad and the ugly</h1>
-    <p class="post-meta">Apr 19, 2020</p>
-  </header>
-
-  <article class="post-content">
-    <p>I’ve been working on system-level software for Linux for some time now,
-which is a job that makes you much more likely to encounter the odd corner
-of an operating system than higher level development. For all practical
-purposes, Linux has succeeded as an operating system. Billions of web queries
-are being served from Linux servers every day, and it’s running on <a href="https://twitter.com/Android/status/1125822326183014401">billions</a> of
-mobile devices.</p>
-
-<p>But of course an operating system ultimately rooted in the 70s will have
-accumulated its fair share of legacy. Of course, not all problems are rooted
-in this: we still are perfectly capable of making new and exciting mistakes.</p>
-
-<h1 id="everything-ish-is-a-file-ish">Everything-ish is a file-ish</h1>
-<p>File descriptors are one of the most poorly named concepts, as they don’t
-necessarily represent (or describe) a file. Think of them more as pointers to
-resources in the kernel (which are conveniently referenced-counted), and things
-will start making more sense. You can use file descriptors to refer to many
-things, among them</p>
-
+<p>I’ve been working on system-level software for Linux for some time now, which is a job that makes you much more likely to encounter the odd corner of an operating system than higher level development. For all practical purposes, Linux has succeeded as an operating system. Billions of web queries are being served from Linux servers every day, and it’s running on <a href="https://twitter.com/Android/status/1125822326183014401">billions</a> of mobile devices.</p>
+<p>But of course an operating system ultimately rooted in the 70s will have accumulated its fair share of legacy. Of course, not all problems are rooted in this: we still are perfectly capable of making new and exciting mistakes.</p>
+<section id="everything-ish-is-a-file-ish" class="level1">
+<h1>Everything-ish is a file-ish</h1>
+<p>File descriptors are one of the most poorly named concepts, as they don’t necessarily represent (or describe) a file. Think of them more as pointers to resources in the kernel (which are conveniently referenced-counted), and things will start making more sense. You can use file descriptors to refer to many things, among them</p>
 <ul>
-  <li><a href="http://man7.org/linux/man-pages/man2/open.2.html">Files and Directories</a></li>
-  <li><a href="http://man7.org/linux/man-pages/man2/socket.2.html">Sockets</a></li>
-  <li><a href="http://man7.org/linux/man-pages/man2/pipe.2.html">Pipes</a></li>
-  <li><a href="http://man7.org/linux/man-pages/man2/timerfd_create.2.html">Timers</a></li>
-  <li><a href="http://man7.org/linux/man-pages/man2/signalfd.2.html">Incoming signals</a></li>
-  <li><a href="http://man7.org/linux/man-pages/man2/memfd_create.2.html">Anonymous memory</a></li>
-  <li><a href="http://man7.org/linux/man-pages/man2/eventfd.2.html">Events</a></li>
-  <li><a href="http://man7.org/linux/man-pages/man2/pidfd_open.2.html">Processes</a></li>
-  <li><a href="http://man7.org/linux/man-pages/man2/perf_event_open.2.html">Performance counters</a></li>
-  <li>Sadly, <a href="https://lwn.net/Articles/280960/">not locks</a></li>
+<li><a href="http://man7.org/linux/man-pages/man2/open.2.html">Files and Directories</a></li>
+<li><a href="http://man7.org/linux/man-pages/man2/socket.2.html">Sockets</a></li>
+<li><a href="http://man7.org/linux/man-pages/man2/pipe.2.html">Pipes</a></li>
+<li><a href="http://man7.org/linux/man-pages/man2/timerfd_create.2.html">Timers</a></li>
+<li><a href="http://man7.org/linux/man-pages/man2/signalfd.2.html">Incoming signals</a></li>
+<li><a href="http://man7.org/linux/man-pages/man2/memfd_create.2.html">Anonymous memory</a></li>
+<li><a href="http://man7.org/linux/man-pages/man2/eventfd.2.html">Events</a></li>
+<li><a href="http://man7.org/linux/man-pages/man2/pidfd_open.2.html">Processes</a></li>
+<li><a href="http://man7.org/linux/man-pages/man2/perf_event_open.2.html">Performance counters</a></li>
+<li>Sadly, <a href="https://lwn.net/Articles/280960/">not locks</a></li>
 </ul>
-
-<p>Many of these things are not files in the either the sense that you can use
-them to store data, nor in the sense that they have a path on the file system.
-That all of these things are file descriptors is actually kind of cool: you can
-wait on many of these things, and asynchronous I/O APIs like <code class="language-plaintext highlighter-rouge">epoll</code> operate on
-file descriptors. This means that you can wait for data to become available on
-some socket <em>or</em> for some timer to run out <em>or</em> for a POSIX signal to arrive.
-No threading nonsense involved.</p>
-
-<p>On the other hand, a file descriptor to an application developer is just an
-integer. From an API perspective, now you end up with all of these things just
-being integers, and all being called fd, and many functions operating on fds,
-all of them working on a different subset of them. For instance, what would it
-even mean to write to a timerfd? This gets even worse when talking about errors.
-Manpages will have a list of possible errnos, but with file descriptor
-functions, usually all bets are off (short of delving into the kernel source)
-of trying to understand which ones can happen for your particular case. If
-your FD is special enough (say, some <code class="language-plaintext highlighter-rouge">/sys</code> file), you might even get errors
-that are <em>not</em> listed on the manpage.</p>
-
-<h1 id="quiz">“Everything is bytes\n\0”</h1>
-<p>Linux has around 300 system calls that you can use in your programs. This is
-sometimes cited as an impressively small API surface for a kernel,
-but that’s only telling half of the truth. There are many, many files in the
-<code class="language-plaintext highlighter-rouge">/proc</code> and <code class="language-plaintext highlighter-rouge">/sys</code> virtual file-systems that you can read from to get
-information or write to to change some behaviour. You can use them to read a
-process’ command line, to get its CPU use, its memory use, to get or change the
-maximum number of file-descriptors open, set counters on breakpoints, etc.
-Long story short, you can do many things. If you are writing systems software,
-you will be using those quite a lot.</p>
-
-<p>Most of those produce (or consume) information in ASCII, so if you want to use
-them programatically, you’ll have to parse the output. If you want to do that,
-it helps to know the format well.</p>
-
-<p>Pop quiz! No cheating.<sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">1</a></sup></p>
-
-<ol>
-  <li>Does <code class="language-plaintext highlighter-rouge">/proc/&lt;pid&gt;/cmdline</code> have a trailing NUL-byte?</li>
-  <li>Does <code class="language-plaintext highlighter-rouge">/proc/&lt;pid&gt;/status</code> use tabs or spaces?</li>
-  <li>Does <code class="language-plaintext highlighter-rouge">/proc/&lt;pid&gt;/status</code> have a trailing newline?</li>
-  <li>NUL-byte?</li>
-  <li>Does <code class="language-plaintext highlighter-rouge">/proc/&lt;pid&gt;/oom_score</code> (a single value) have a trailing newline?</li>
-  <li>Does <code class="language-plaintext highlighter-rouge">/proc/&lt;pid&gt;/wchan</code> (a single value) have a trailing newline?</li>
+<p>Many of these things are not files in the either the sense that you can use them to store data, nor in the sense that they have a path on the file system. That all of these things are file descriptors is actually kind of cool: you can wait on many of these things, and asynchronous I/O APIs like <code>epoll</code> operate on file descriptors. This means that you can wait for data to become available on some socket <em>or</em> for some timer to run out <em>or</em> for a POSIX signal to arrive. No threading nonsense involved.</p>
+<p>On the other hand, a file descriptor to an application developer is just an integer. From an API perspective, now you end up with all of these things just being integers, and all being called fd, and many functions operating on fds, all of them working on a different subset of them. For instance, what would it even mean to write to a timerfd? This gets even worse when talking about errors. Manpages will have a list of possible errnos, but with file descriptor functions, usually all bets are off (short of delving into the kernel source) of trying to understand which ones can happen for your particular case. If your FD is special enough (say, some <code>/sys</code> file), you might even get errors that are <em>not</em> listed on the manpage.</p>
+</section>
+<section id="quiz" class="level1">
+<h1>“Everything is bytes\0”</h1>
+<p>Linux has around 300 system calls that you can use in your programs. This is sometimes cited as an impressively small API surface for a kernel, but that’s only telling half of the truth. There are many, many files in the <code>/proc</code> and <code>/sys</code> virtual file-systems that you can read from to get information or write to to change some behaviour. You can use them to read a process’ command line, to get its CPU use, its memory use, to get or change the maximum number of file-descriptors open, set counters on breakpoints, etc. Long story short, you can do many things. If you are writing systems software, you will be using those quite a lot.</p>
+<p>Most of those produce (or consume) information in ASCII, so if you want to use them programatically, you’ll have to parse the output. If you want to do that, it helps to know the format well.</p>
+<p>Pop quiz! No cheating.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<ol type="1">
+<li>Does <code>/proc/&lt;pid&gt;/cmdline</code> have a trailing NUL-byte?</li>
+<li>Does <code>/proc/&lt;pid&gt;/status</code> use tabs or spaces?</li>
+<li>Does <code>/proc/&lt;pid&gt;/status</code> have a trailing newline?</li>
+<li>NUL-byte?</li>
+<li>Does <code>/proc/&lt;pid&gt;/oom_score</code> (a single value) have a trailing newline?</li>
+<li>Does <code>/proc/&lt;pid&gt;/wchan</code> (a single value) have a trailing newline?</li>
 </ol>
-
 <p><a href="#quiz-results">Go to results</a>.</p>
-
-<p>So that was fun! If you haven’t looked at the results yet, please do take a
-second, even if you haven’t tried to answer yourself. There are multiple problems
-highlighted: most of <code class="language-plaintext highlighter-rouge">/proc</code> files are ad-hoc text formats (at least <em>most</em> of
-them do use newlines, it appears). Another one is that they are extremely poorly
-documented. A quick look at <a href="http://man7.org/linux/man-pages/man5/proc.5.html"><code class="language-plaintext highlighter-rouge">man 5 proc</code></a> would not go far in answering
-the questions in this quiz. You have to look at the files and work out the
-format from this. Of course, if you read this from a program, the kernel
-rendering text only for your program to parse it back again is wasteful in both
-computer and human resources. This being ad-hoc formats, one has to write a
-parser for each and every one of them.</p>
-
-<p>For some high-volume formats like ftrace, parsing from the text format is
-actually prohibitively expensive. This is why there is also a (undocumented)
-de-facto binary interface. With some configuration in, yes, you guessed it,
-a custom text format.</p>
-
-<h1 id="manything-is-a-race">Manything is a race</h1>
-<p>How would you implement <code class="language-plaintext highlighter-rouge">killall</code>? Conceptually, it’s fairly simple: you go
-through all processes, and kill the ones matching. Having some function
-<code class="language-plaintext highlighter-rouge">matches</code> to determine whether a PID matches the given specification, you’d
-write something along the lines of this:</p>
-
-<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">pid_t</span><span class="o">&gt;</span> <span class="n">pids</span> <span class="o">=</span> <span class="n">get_all_pids</span><span class="p">();</span>
-<span class="k">for</span> <span class="p">(</span><span class="n">pid_t</span> <span class="n">pid</span> <span class="o">:</span> <span class="n">pids</span><span class="p">)</span> <span class="p">{</span>
-  <span class="k">if</span> <span class="p">(</span><span class="n">matches</span><span class="p">(</span><span class="n">pid</span><span class="p">))</span> <span class="p">{</span>
-    <span class="n">kill</span><span class="p">(</span><span class="n">pid</span><span class="p">);</span>
-  <span class="p">}</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>Cool. That seems to work (given some imagination). But if you are a diligent
-programmer, maybe having done some multi-threaded programming, something might
-look a bit off. All we pass around is an integer <code class="language-plaintext highlighter-rouge">pid</code>, so how do we know it
-refers to the same process in <code class="language-plaintext highlighter-rouge">match(pid)</code> and in <code class="language-plaintext highlighter-rouge">kill(pid)</code>? Processes can
-go away, and their PIDs will be re-used. In that case, we could potentially
-match PID 1234 when it is <code class="language-plaintext highlighter-rouge">retriable_nonsense_job</code>, but kill
-<code class="language-plaintext highlighter-rouge">super_important_process</code> later.</p>
-
-<p>So how do you write a <em>correct</em> <code class="language-plaintext highlighter-rouge">killall</code>? Turns out, on Linux it’s impossible
-before 5.1, on other Unices it might still be. All the major operating systems’
-implementations are not fundamentally different to the pseudocode above<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">2</a></sup>.
-On Linux 5.1, you can <code class="language-plaintext highlighter-rouge">opendir</code> <code class="language-plaintext highlighter-rouge">/proc/\&lt;pid\&gt;</code>, then use that as a handle to both
-read the command line (and other attributes), and <code class="language-plaintext highlighter-rouge">pidfd_send_signal</code>.</p>
-
+<p>So that was fun! If you haven’t looked at the results yet, please do take a second, even if you haven’t tried to answer yourself. There are multiple problems highlighted: most of <code>/proc</code> files are ad-hoc text formats (at least <em>most</em> of them do use newlines, it appears). Another one is that they are extremely poorly documented. A quick look at <a href="http://man7.org/linux/man-pages/man5/proc.5.html"><code>man 5 proc</code></a> would not go far in answering the questions in this quiz. You have to look at the files and work out the format from this. Of course, if you read this from a program, the kernel rendering text only for your program to parse it back again is wasteful in both computer and human resources. This being ad-hoc formats, one has to write a parser for each and every one of them.</p>
+<p>For some high-volume formats like ftrace, parsing from the text format is actually prohibitively expensive. This is why there is also a (undocumented) de-facto binary interface. With some configuration in, yes, you guessed it, a custom text format.</p>
+</section>
+<section id="manything-is-a-race" class="level1">
+<h1>Manything is a race</h1>
+<p>How would you implement <code>killall</code>? Conceptually, it’s fairly simple: you go through all processes, and kill the ones matching. Having some function <code>matches</code> to determine whether a PID matches the given specification, you’d write something along the lines of this:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">pid_t</span><span class="op">&gt;</span> pids <span class="op">=</span> get_all_pids<span class="op">();</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="dt">pid_t</span> pid <span class="op">:</span> pids<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>matches<span class="op">(</span>pid<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    kill<span class="op">(</span>pid<span class="op">);</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Cool. That seems to work (given some imagination). But if you are a diligent programmer, maybe having done some multi-threaded programming, something might look a bit off. All we pass around is an integer <code>pid</code>, so how do we know it refers to the same process in <code>match(pid)</code> and in <code>kill(pid)</code>? Processes can go away, and their PIDs will be re-used. In that case, we could potentially match PID 1234 when it is <code>retriable_nonsense_job</code>, but kill <code>super_important_process</code> later.</p>
+<p>So how do you write a <em>correct</em> <code>killall</code>? Turns out, on Linux it’s impossible before 5.1, on other Unices it might still be. All the major operating systems’ implementations are not fundamentally different to the pseudocode above<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>. On Linux 5.1, you can <code>opendir</code> <code>/proc/&lt;pid&gt;</code>, then use that as a handle to both read the command line (and other attributes), and <code>pidfd_send_signal</code>.</p>
 <p>This might remind you of some code you might have written. Something like</p>
-
-<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">pid_t</span> <span class="n">pid</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
-<span class="k">if</span> <span class="p">(</span><span class="n">pid</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-  <span class="n">oh</span> <span class="n">no</span><span class="p">;</span>
-  <span class="n">abort</span><span class="p">();</span>
-<span class="p">}</span>
-<span class="k">if</span> <span class="p">(</span><span class="n">pid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-  <span class="n">something</span> <span class="n">in</span> <span class="n">child</span><span class="p">;</span>
-<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-  <span class="kt">int</span> <span class="n">status</span><span class="p">;</span>
-  <span class="n">YOUR_EINTR_WRAPPER</span><span class="p">(</span><span class="n">waitpid</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">status</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>Could PID-reuse mean you could end up waiting on something else? Something
-that might never exit, in the worst case? Thankfully, not.
-The child process will actually stick around as a <em>zombie</em>, even
-if it is finished, until you waitpid for it. As you can only wait on your
-children, no race can occur like this. Of course, the other thing that can
-happen is that the parent dies before it has chance to waitpid. In that case,
-the problem is also averted through some gymnastics: the child process gets
-<em>orphaned</em> and reparented to <code class="language-plaintext highlighter-rouge">init</code>, which will wait on it to prevent the
-zombie from sticking around. <em>Phew</em>.</p>
-
-<h1 id="for-forks-sake">For fork’s sake</h1>
-
-<p><a href="http://man7.org/linux/man-pages/man2/fork.2.html"><code class="language-plaintext highlighter-rouge">fork</code></a> is one of the
-fundamental building blocks of Unix systems. It goes way back to the old days of
-Unix and is used to create a new process. That process is a copy of the
-original one. From an API perspective, to the child it will appear that <code class="language-plaintext highlighter-rouge">fork</code>
-returned 0, while to the parent the PID of the child. Kind of magical if you
-think of it.<sup id="fnref:exhalation" role="doc-noteref"><a href="#fn:exhalation" class="footnote" rel="footnote">3</a></sup></p>
-
-<p>Memory does not actually get copied just yet, but only when either the parent
-or the child attempt to change it (this is called copy-on-write). File
-descriptors will get duplicated (convenient that they are already referenced
-counted). Problems already start popping up here: you need to be sure to close
-the ones you don’t actually need in the child, or you might hold on to them
-forever. This gets even worse if you <code class="language-plaintext highlighter-rouge">exec</code> another program, which (in general)
-won’t know or care about your file descriptors. To solve the latter problem,
-<code class="language-plaintext highlighter-rouge">O_CLOEXEC</code> (close on exec) was invented. Of course that’s not the default, so
-people often manually iterate over all FDs (via <code class="language-plaintext highlighter-rouge">/proc</code>), and then close them
-all.</p>
-
-<p>But then came threads, and we went from bad to worse. Because it’s unclear what
-to do with all these other threads (it’s not like they have a call to fork where
-they could take different branches), they just get terminated in whatever state
-they are when fork gets called. Remember we copied the whole memory state? That
-might contain a lock (say, in <code class="language-plaintext highlighter-rouge">malloc</code>) that was being held by one of those
-threads. The next time anything calls <code class="language-plaintext highlighter-rouge">malloc</code>, it will be stuck forever,
-waiting on the now terminated thread. Your child process is toast. Your program
-might even be single threaded, but some library you pulled might have created a
-thread, that might have happened to do an allocation when you called fork.</p>
-
-<p>They came up with <code class="language-plaintext highlighter-rouge">pthread_atfork</code> hooks that get called before the fork, and
-then afterwards in the parent on the child. That was intended to allow library
-developers to make their libraries safe in the presence of forks, but even the
-manpage concedes that this “is generally too difficult to be practicable.”</p>
-
-<p>But there’s more! Even though the memory isn’t actually copied, forking is
-still an expensive operation for the kernel. It has to copy all sorts of
-structures like page tables and so on. That’s a waste if all we are going
-to do is exec a new program, replacing the page tables once again. So
-they came up with <code class="language-plaintext highlighter-rouge">vfork</code>, which is like fork except that you pinkie-promise
-not to call anything except <code class="language-plaintext highlighter-rouge">exec</code> or <code class="language-plaintext highlighter-rouge">_exit</code> afterwards. This raises
-questions about the API design: if all you are allowed to call is <code class="language-plaintext highlighter-rouge">exec</code>, why
-not create a function that is the combination of vfork an exec? With all the
-different exec variations I can see how that would be slightly painful, but at
-least not something that makes it super easy to shoot your foot. In fact,
-<code class="language-plaintext highlighter-rouge">posix_spawn</code> is exactly that and was standardised in 2001.</p>
-
-<p>But going further down the route of forking, modern Linux also has something
-else up its sleeve: <a href="http://man7.org/linux/man-pages/man2/clone.2.html"><code class="language-plaintext highlighter-rouge">clone</code></a>. That let’s you mix-and-match what your new
-thread/process should share and what it shouldn’t. It let’s you create
-something that has its own process id, but is a thread for all other intents
-and purposes. Good luck.
-glibc does not provide a syscall wrapper for this, so you’ll have to be extra
-dedicated to use this.<sup id="fnref:wrapper" role="doc-noteref"><a href="#fn:wrapper" class="footnote" rel="footnote">4</a></sup></p>
-
-<p>Ultimately, things do not compose in a way that make it possible to locally
-reason about a program. Yes, if you hold fork and threads exactly right (for
-instance by managing all the threads, and having a way to signal them to go
-to a safe state, and then forking) you <em>can</em> write a correct program. But that
-requires you to reason globally about your program, which only works if you
-control every bit of your program, and even then is very hard.</p>
-
-<h1 id="enosys">ENOSYS</h1>
-<p>Writing cross-platform software is hard. Most software is written for Linux,
-and if it happens to run on other Unices, that is a happy accident. For systems
-software, that is usually a lost cause, as it needs more powerful APIs than
-POSIX provides. So we’ll settle for Linux. Most of these APIs were introduced
-at some point, so you’d usually target Linux of some version or newer – this
-is a generally unavoidable thing to do. But even then Linux has compile-time
-configuration flags that will enable or disable some system calls, or some
-arguments to system calls. And some depend on the target architecture. It’s a
-bit like duck typing: you call it and hope it works.</p>
-
-<blockquote>
-  <p>ENOSYS The membarrier() system call is not implemented by this
-      kernel.</p>
-
-  <p>EINVAL cmd is invalid, or flags is nonzero, or the
-       MEMBARRIER_CMD_GLOBAL command is disabled because the
-       nohz_full CPU parameter has been set, or the
-       MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE and
-       MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE commands
-       are not implemented by the architecture.</p>
-
-  <p>– <a href="http://man7.org/linux/man-pages/man2/membarrier.2.html"><code class="language-plaintext highlighter-rouge">man 2 membarrier</code></a></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">pid_t</span> pid <span class="op">=</span> fork<span class="op">();</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>pid <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  oh no<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  abort<span class="op">();</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>pid <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  something in child<span class="op">;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> status<span class="op">;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  YOUR_EINTR_WRAPPER<span class="op">(</span>waitpid<span class="op">(</span>pid<span class="op">,</span> <span class="op">&amp;</span>status<span class="op">,</span> <span class="dv">0</span><span class="op">));</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Could PID-reuse mean you could end up waiting on something else? Something that might never exit, in the worst case? Thankfully, not. The child process will actually stick around as a <em>zombie</em>, even if it is finished, until you waitpid for it. As you can only wait on your children, no race can occur like this. Of course, the other thing that can happen is that the parent dies before it has chance to waitpid. In that case, the problem is also averted through some gymnastics: the child process gets <em>orphaned</em> and reparented to <code>init</code>, which will wait on it to prevent the zombie from sticking around. <em>Phew</em>.</p>
+</section>
+<section id="for-forks-sake" class="level1">
+<h1>For fork’s sake</h1>
+<p><a href="http://man7.org/linux/man-pages/man2/fork.2.html"><code>fork</code></a> is one of the fundamental building blocks of Unix systems. It goes way back to the old days of Unix and is used to create a new process. That process is a copy of the original one. From an API perspective, to the child it will appear that <code>fork</code> returned 0, while to the parent the PID of the child. Kind of magical if you think of it.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<p>Memory does not actually get copied just yet, but only when either the parent or the child attempt to change it (this is called copy-on-write). File descriptors will get duplicated (convenient that they are already referenced counted). Problems already start popping up here: you need to be sure to close the ones you don’t actually need in the child, or you might hold on to them forever. This gets even worse if you <code>exec</code> another program, which (in general) won’t know or care about your file descriptors. To solve the latter problem, <code>O_CLOEXEC</code> (close on exec) was invented. Of course that’s not the default, so people often manually iterate over all FDs (via <code>/proc</code>), and then close them all.</p>
+<p>But then came threads, and we went from bad to worse. Because it’s unclear what to do with all these other threads (it’s not like they have a call to fork where they could take different branches), they just get terminated in whatever state they are when fork gets called. Remember we copied the whole memory state? That might contain a lock (say, in <code>malloc</code>) that was being held by one of those threads. The next time anything calls <code>malloc</code>, it will be stuck forever, waiting on the now terminated thread. Your child process is toast. Your program might even be single threaded, but some library you pulled might have created a thread, that might have happened to do an allocation when you called fork.</p>
+<p>They came up with <code>pthread_atfork</code> hooks that get called before the fork, and then afterwards in the parent on the child. That was intended to allow library developers to make their libraries safe in the presence of forks, but even the manpage concedes that this “is generally too difficult to be practicable.”</p>
+<p>But there’s more! Even though the memory isn’t actually copied, forking is still an expensive operation for the kernel. It has to copy all sorts of structures like page tables and so on. That’s a waste if all we are going to do is exec a new program, replacing the page tables once again. So they came up with <code>vfork</code>, which is like fork except that you pinkie-promise not to call anything except <code>exec</code> or <code>_exit</code> afterwards. This raises questions about the API design: if all you are allowed to call is <code>exec</code>, why not create a function that is the combination of vfork an exec? With all the different exec variations I can see how that would be slightly painful, but at least not something that makes it super easy to shoot your foot. In fact, <code>posix_spawn</code> is exactly that and was standardised in 2001.</p>
+<p>But going further down the route of forking, modern Linux also has something else up its sleeve: <a href="http://man7.org/linux/man-pages/man2/clone.2.html"><code>clone</code></a>. That let’s you mix-and-match what your new thread/process should share and what it shouldn’t. It let’s you create something that has its own process id, but is a thread for all other intents and purposes. Good luck. glibc does not provide a syscall wrapper for this, so you’ll have to be extra dedicated to use this.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
+<p>Ultimately, things do not compose in a way that make it possible to locally reason about a program. Yes, if you hold fork and threads exactly right (for instance by managing all the threads, and having a way to signal them to go to a safe state, and then forking) you <em>can</em> write a correct program. But that requires you to reason globally about your program, which only works if you control every bit of your program, and even then is very hard.</p>
+</section>
+<section id="enosys" class="level1">
+<h1>ENOSYS</h1>
+<p>Writing cross-platform software is hard. Most software is written for Linux, and if it happens to run on other Unices, that is a happy accident. For systems software, that is usually a lost cause, as it needs more powerful APIs than POSIX provides. So we’ll settle for Linux. Most of these APIs were introduced at some point, so you’d usually target Linux of some version or newer – this is a generally unavoidable thing to do. But even then Linux has compile-time configuration flags that will enable or disable some system calls, or some arguments to system calls. And some depend on the target architecture. It’s a bit like duck typing: you call it and hope it works.</p>
+<blockquote class="blockquote">
+<p>ENOSYS The membarrier() system call is not implemented by this kernel.</p>
+<p>EINVAL cmd is invalid, or flags is nonzero, or the MEMBARRIER_CMD_GLOBAL command is disabled because the nohz_full CPU parameter has been set, or the MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE and MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE commands are not implemented by the architecture.</p>
+<p>– <a href="http://man7.org/linux/man-pages/man2/membarrier.2.html"><code>man 2 membarrier</code></a></p>
 </blockquote>
-
-<p>Any software that uses one of those system calls is inherently unportable even
-between machines of the <em>same kernel version</em>. You will notice this
-incompatibility at runtime, whenever you attempt to call that syscall.
-Some more sanity could be achieved if there was a way to check for this without
-actually calling the syscall. Then some static analysis could figure out which
-syscalls you use, and then generate a stanza to check whether they exist that
-you can run at first startup. Everything would be like <code class="language-plaintext highlighter-rouge">./configure</code>. What’s
-not to love?</p>
-
-<h1 id="standards">Standards</h1>
-<blockquote>
-  <p>WE DO NOT BREAK USERSPACE!</p>
-
-  <p>– Linus (2012)</p>
+<p>Any software that uses one of those system calls is inherently unportable even between machines of the <em>same kernel version</em>. You will notice this incompatibility at runtime, whenever you attempt to call that syscall. Some more sanity could be achieved if there was a way to check for this without actually calling the syscall. Then some static analysis could figure out which syscalls you use, and then generate a stanza to check whether they exist that you can run at first startup. Everything would be like <code>./configure</code>. What’s not to love?</p>
+</section>
+<section id="standards" class="level1">
+<h1>Standards</h1>
+<blockquote class="blockquote">
+<p>WE DO NOT BREAK USERSPACE!</p>
+<p>– Linus (2012)</p>
 </blockquote>
-
-<p>C++ has <a href="https://timsong-cpp.github.io/cppwp/n3337/">The Standard</a>, which, even
-being aspirational<sup id="fnref:aspirational" role="doc-noteref"><a href="#fn:aspirational" class="footnote" rel="footnote">5</a></sup> at times, gives people a way to abstractly
-reason about their programs. Unix has POSIX, but that is a very low
-common denominator. Linux-specific details have no standard whatsoever. In the
-end, the kernel behaviour is whatever is in the kernel source, and the
-kernel promises to not break userspace<sup id="fnref:nobreak" role="doc-noteref"><a href="#fn:nobreak" class="footnote" rel="footnote">6</a></sup>. For libc, it’s the wild west
-without any proper specification once you go beyond what’s specified in C and
-POSIX.</p>
-
-<p>With the proliferation on non-Glibc based Linux systems (musl on Alpine Linux,
-Bionic on Android) this makes interoperability more painful than it has to be.
-But more than that: it makes system programming <em>very hard</em>. It is often
-impossible to work in all situations client code could construct via creative
-use of the available syscalls. Ultimately, looking at kernel and userspace in
-isolation is not the right approach. In an ideal world, applications should not
-need to care about the kernel.</p>
-
-<h1 id="errno">Errno</h1>
-
+<p>C++ has <a href="https://timsong-cpp.github.io/cppwp/n3337/">The Standard</a>, which, even being aspirational<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> at times, gives people a way to abstractly reason about their programs. Unix has POSIX, but that is a very low common denominator. Linux-specific details have no standard whatsoever. In the end, the kernel behaviour is whatever is in the kernel source, and the kernel promises to not break userspace<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a>. For libc, it’s the wild west without any proper specification once you go beyond what’s specified in C and POSIX.</p>
+<p>With the proliferation on non-Glibc based Linux systems (musl on Alpine Linux, Bionic on Android) this makes interoperability more painful than it has to be. But more than that: it makes system programming <em>very hard</em>. It is often impossible to work in all situations client code could construct via creative use of the available syscalls. Ultimately, looking at kernel and userspace in isolation is not the right approach. In an ideal world, applications should not need to care about the kernel.</p>
+</section>
+<section id="errno" class="level1">
+<h1>Errno</h1>
 <p>Pop quiz again! How did I get this error?</p>
-
-<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">$ </span>./a.out 
-bash: ./a.out: No such file or directory</code></pre></figure>
-
-<p>If you guessed that <code class="language-plaintext highlighter-rouge">a.out</code> didn’t exist, that would be one way of getting this
-error. But in my case what does not exist is the linker library that is
-specified in the ELF file<sup id="fnref:link-error" role="doc-noteref"><a href="#fn:link-error" class="footnote" rel="footnote">7</a></sup>. That’s one of the joys of <code class="language-plaintext highlighter-rouge">errno</code>:
-for more complicated operations like this, it is unclear what file the <code class="language-plaintext highlighter-rouge">ENOENT</code>
-error refers to. Some of the socket errnos on the other hand are very specific.
-Other syscalls just give you <code class="language-plaintext highlighter-rouge">EINVAL</code>, and you need to figure out what exactly
-is wrong. If all you get is a single integer, I don’t think there’s a way to
-really strike that balance, as you have to encode both what you want humans to
-see, but also what the calling code might deal with. For <code class="language-plaintext highlighter-rouge">EINVAL</code>, a human
-would probably want to know which of the arguments was wrong, while the
-calling code can’t do anything with that information.</p>
-
-<h1 id="conclusion">Conclusion</h1>
-<p>I could go on, but I think I’ll wrap it up here. People can only take so much.
-<sup id="fnref:followup" role="doc-noteref"><a href="#fn:followup" class="footnote" rel="footnote">8</a></sup></p>
-
-<p>Systems programming is exciting, and if you’ve read this far you’d probably be
-inclined to agree. I’ve shown some of the not-so-nice corners I’ve come across.
-Some are inevitable in an operating system of this size and age. But they also
-are a valuable lesson in system design. Generalising a bit</p>
-
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> ./a.out </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">bash:</span> ./a.out: No such file or directory</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>If you guessed that <code>a.out</code> didn’t exist, that would be one way of getting this error. But in my case what does not exist is the linker library that is specified in the ELF file<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a>. That’s one of the joys of <code>errno</code>: for more complicated operations like this, it is unclear what file the <code>ENOENT</code> error refers to. Some of the socket errnos on the other hand are very specific. Other syscalls just give you <code>EINVAL</code>, and you need to figure out what exactly is wrong. If all you get is a single integer, I don’t think there’s a way to really strike that balance, as you have to encode both what you want humans to see, but also what the calling code might deal with. For <code>EINVAL</code>, a human would probably want to know which of the arguments was wrong, while the calling code can’t do anything with that information.</p>
+</section>
+<section id="conclusion" class="level1">
+<h1>Conclusion</h1>
+<p>I could go on, but I think I’ll wrap it up here. People can only take so much. <a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></p>
+<p>Systems programming is exciting, and if you’ve read this far you’d probably be inclined to agree. I’ve shown some of the not-so-nice corners I’ve come across. Some are inevitable in an operating system of this size and age. But they also are a valuable lesson in system design. Generalising a bit</p>
 <ul>
-  <li><em>Data should be machine-readable</em>: otherwise, people will have to build ad-hoc
-parsers. Those will contain bugs.</li>
-  <li><em>APIs should allow to locally reason about code</em>: it is impossible to reason
-about all your dependencies in big software systems. Apart from that, it is
-very hard to reason about large state spaces.</li>
-  <li><em>Errors matter:</em> good error reporting gives a good developer experience.</li>
-  <li><em>Consistency matters:</em> having too many knobs fragments your system.</li>
-  <li><em>Behaviour should be specified:</em> This
-creates a contract between application programmers and operating system
-programmers. People will violate that contract, but no one knows what to
-expect if there isn’t any.</li>
+<li><em>Data should be machine-readable</em>: otherwise, people will have to build ad-hoc parsers. Those will contain bugs.</li>
+<li><em>APIs should allow to locally reason about code</em>: it is impossible to reason about all your dependencies in big software systems. Apart from that, it is very hard to reason about large state spaces.</li>
+<li><em>Errors matter:</em> good error reporting gives a good developer experience.</li>
+<li><em>Consistency matters:</em> having too many knobs fragments your system.</li>
+<li><em>Behaviour should be specified:</em> This creates a contract between application programmers and operating system programmers. People will violate that contract, but no one knows what to expect if there isn’t any.</li>
 </ul>
-
-<p>But also, we have to work with what we’ve got. Even if we come up with robust
-APIs for client applications, there we always be the long-tail of weird
-legacy software that uses the old ones. <code class="language-plaintext highlighter-rouge">fork</code> is here to stay, and so are
-threads. What we can do is meticulously document both the caveats that come
-with those, and the behaviour. For <code class="language-plaintext highlighter-rouge">/proc</code> files, some EBNF definition can help
-both formalize the format, and be used to auto-generate parsers. The less
-we can base our engineering on guesswork, the better.</p>
-
-<h1 id="quiz-results">EBNF results</h1>
-<ol>
-  <li>Maybe.<sup id="fnref:maybe" role="doc-noteref"><a href="#fn:maybe" class="footnote" rel="footnote">9</a></sup></li>
-  <li>Tabs.<sup id="fnref:status-tabs" role="doc-noteref"><a href="#fn:status-tabs" class="footnote" rel="footnote">10</a></sup></li>
-  <li>Yes.</li>
-  <li>No.</li>
-  <li>Yes.</li>
-  <li>No.</li>
+<p>But also, we have to work with what we’ve got. Even if we come up with robust APIs for client applications, there we always be the long-tail of weird legacy software that uses the old ones. <code>fork</code> is here to stay, and so are threads. What we can do is meticulously document both the caveats that come with those, and the behaviour. For <code>/proc</code> files, some EBNF definition can help both formalize the format, and be used to auto-generate parsers. The less we can base our engineering on guesswork, the better.</p>
+</section>
+<section id="quiz-results" class="level1">
+<h1>EBNF results</h1>
+<ol type="1">
+<li>Maybe.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a></li>
+<li>Tabs.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></li>
+<li>Yes.</li>
+<li>No.</li>
+<li>Yes.</li>
+<li>No.</li>
 </ol>
-
-<p>Of course, those were kind of trick questions. No one would ever have gotten
-the first one right (what kind of answer is that even?). And the last two don’t
-make any sense either, because they are both single values.</p>
-
+<p>Of course, those were kind of trick questions. No one would ever have gotten the first one right (what kind of answer is that even?). And the last two don’t make any sense either, because they are both single values.</p>
 <p><a href="#quiz">Go back up</a></p>
+</section>
+<section id="endnotes" class="level1">
+<h1>Endnotes</h1>
 
-<h1 id="endnotes">Endnotes</h1>
 
-<div class="footnotes" role="doc-endnotes">
-  <ol>
-    <li id="fn:2" role="doc-endnote">
-      <p>Or cheat, I’m a sign, not a cop. <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
-    </li>
-    <li id="fn:1" role="doc-endnote">
-      <p><a href="https://github.com/acg/psmisc/blob/master/src/killall.c">GNU/Linux</a>, <a href="http://sources.freebsd.org/RELENG_7/src/usr.bin/killall/killall.c">FreeBSD</a>, or <a href="https://github.com/apple-open-source/macos/blob/master/shell_cmds/killall/killall.c">macOS</a>. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
-    </li>
-    <li id="fn:exhalation" role="doc-endnote">
-      <p><strong>Spoilers for Ted Chiang’s story “Anxiety Is the Dizziness of
-          Freedom”</strong>. It’s like the premise of that story. 
-          (Assuming single-threaded) fork brings forth a new
-          process that is the same, except for one int, which is used to
-          make a choice. All other differences derive from that. <a href="#fnref:exhalation" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
-    </li>
-    <li id="fn:wrapper" role="doc-endnote">
-      <p>I’m not a fan of syscalls without wrappers, as that encourages
-        people to use raw syscalls, which then constrains libc
-        implementors. clone is actually a good example: Bionic (Android’s
-        libc) has a cache for the TID of a thread. It needs to invalidate
-        that cache upon calls to fork / clone / etc. It can only do this
-        when people use the syscall wrapper. People don’t always. <a href="#fnref:wrapper" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
-    </li>
-    <li id="fn:aspirational" role="doc-endnote">
-      <p>Some of the more low-level details leave a lot to be desired.
-             Many things are impossible in a standards compliant way, or
-             are underspecified, so people end up doing what works in
-             practice. <a href="#fnref:aspirational" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
-    </li>
-    <li id="fn:nobreak" role="doc-endnote">
-      <p>This, of course, leads to the question of what constitutes a
-        feature, and what constitutes a bug. And what level of quality you
-        expect from user-space. For instance, adding a new line to a proc
-        file would break applications that do not properly look at key,
-        value pairs, but rather hard-code the line they expect the value
-        to be at. It’s generally accepted that writing code like this is
-        asking to be broken. <a href="#fnref:nobreak" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
-    </li>
-    <li id="fn:link-error" role="doc-endnote">
-      <p>This has actually happened to me before. But if you know where
-           to look (<a href="http://man7.org/linux/man-pages/man2/execve.2.html"><code class="language-plaintext highlighter-rouge">man execve</code></a>),
-           it’s at least documented. <a href="#fnref:link-error" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
-    </li>
-    <li id="fn:followup" role="doc-endnote">
-      <p>I do have opinions on more things, including but not limited to:
-         <code class="language-plaintext highlighter-rouge">perf_event_open</code>, signals, <code class="language-plaintext highlighter-rouge">sendmsg</code>, session leaders,
-         controlling terminals, <code class="language-plaintext highlighter-rouge">SIGPIPE</code>, … <a href="#fnref:followup" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
-    </li>
-    <li id="fn:maybe" role="doc-endnote">
-      <p>Depends on whether your kernel has <a href="https://github.com/torvalds/linux/commit/f5b65348fd77839b50e79bc0a5e536832ea52d8d">this commit</a>. <a href="#fnref:maybe" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
-    </li>
-    <li id="fn:status-tabs" role="doc-endnote">
-      <p>The <a href="http://man7.org/linux/man-pages/man5/proc.5.html">manpage</a> uses spaces. <a href="#fnref:status-tabs" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
-    </li>
-  </ol>
-</div>
+</section>
 
-  </article>
 
-</div>
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
 
-      </div>
+<ol>
+<li id="fn1"><p>Or cheat, I’m a sign, not a cop.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a href="https://github.com/acg/psmisc/blob/master/src/killall.c">GNU/Linux</a>, <a href="http://sources.freebsd.org/RELENG_7/src/usr.bin/killall/killall.c">FreeBSD</a>, or <a href="https://github.com/apple-open-source/macos/blob/master/shell_cmds/killall/killall.c">macOS</a>.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p><strong>Spoilers for Ted Chiang’s story “Anxiety Is the Dizziness of Freedom”</strong>. It’s like the premise of that story. (Assuming single-threaded) fork brings forth a new process that is the same, except for one int, which is used to make a choice. All other differences derive from that.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>I’m not a fan of syscalls without wrappers, as that encourages people to use raw syscalls, which then constrains libc implementors. clone is actually a good example: Bionic (Android’s libc) has a cache for the TID of a thread. It needs to invalidate that cache upon calls to fork / clone / etc. It can only do this when people use the syscall wrapper. People don’t always.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>Some of the more low-level details leave a lot to be desired. Many things are impossible in a standards compliant way, or are underspecified, so people end up doing what works in practice.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>This, of course, leads to the question of what constitutes a feature, and what constitutes a bug. And what level of quality you expect from user-space. For instance, adding a new line to a proc file would break applications that do not properly look at key, value pairs, but rather hard-code the line they expect the value to be at. It’s generally accepted that writing code like this is asking to be broken.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>This has actually happened to me before. But if you know where to look (<a href="http://man7.org/linux/man-pages/man2/execve.2.html"><code>man execve</code></a>), it’s at least documented.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>I do have opinions on more things, including but not limited to: <code>perf_event_open</code>, signals, <code>sendmsg</code>, session leaders, controlling terminals, <code>SIGPIPE</code>, …<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>Depends on whether your kernel has <a href="https://github.com/torvalds/linux/commit/f5b65348fd77839b50e79bc0a5e536832ea52d8d">this commit</a>.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>The <a href="http://man7.org/linux/man-pages/man5/proc.5.html">manpage</a> uses spaces.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/bitsrc\.org\/blog");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Contact: <a href="mailto:blog@bitsrc.org">blog@bitsrc.org</a></p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
     </div>
-
-    <footer class="site-footer">
-
-  <div class="wrapper">
-
-    <h2 class="footer-heading">Strings over Σ</h2>
-
-    <div class="footer-col-wrapper">
-      <div class="footer-col  footer-col-1">
-        <ul class="contact-list">
-          <li>Strings over Σ</li>
-          <li><a href="mailto:blog@bitsrc.org">blog@bitsrc.org</a></li>
-        </ul>
-      </div>
-
-      <div class="footer-col  footer-col-2">
-        <ul class="social-media-list">
-          
-          <li>
-            <a href="https://github.com/fmayer">
-              <span class="icon  icon--github">
-                <svg viewBox="0 0 16 16">
-                  <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
-                </svg>
-              </span>
-
-              <span class="username">fmayer</span>
-            </a>
-          </li>
-          
-
-          
-        </ul>
-      </div>
-
-      <div class="footer-col  footer-col-3">
-        <p class="text">A blog about computer science, logic and programming. Occasionally other topics reasonably consistent with the rest.
-</p>
-      </div>
-    </div>
-
+    <div class="nav-footer-right">
+<p>Built with <a href="https://quarto.org">Quarto</a></p>
+</div>
   </div>
-
 </footer>
 
 
-  </body>
 
-</html>
+
+</body></html>
