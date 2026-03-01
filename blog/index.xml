@@ -13,7 +13,7 @@
 <lastBuildDate>Sun, 19 Apr 2020 07:00:00 GMT</lastBuildDate>
 <item>
   <title>Linux: The good, the bad and the ugly</title>
-  <link>https://bitsrc.org/blog/2020/04/19/linux-the-good-the-bad-and-the-ugly.html</link>
+  <link>https://bitsrc.org/blog/posts/linux-the-good-the-bad-and-the-ugly.html</link>
   <description><![CDATA[ 
 
 
@@ -280,12 +280,12 @@ font-style: inherit;">bash:</span> ./a.out: No such file or directory</span></co
 <li id="fn10"><p>The <a href="http://man7.org/linux/man-pages/man5/proc.5.html">manpage</a> uses spaces.↩︎</p></li>
 </ol>
 </section></div> ]]></description>
-  <guid>https://bitsrc.org/blog/2020/04/19/linux-the-good-the-bad-and-the-ugly.html</guid>
+  <guid>https://bitsrc.org/blog/posts/linux-the-good-the-bad-and-the-ugly.html</guid>
   <pubDate>Sun, 19 Apr 2020 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Automatic Org-Mode</title>
-  <link>https://bitsrc.org/blog/2020/04/16/organizing-notetaking.html</link>
+  <link>https://bitsrc.org/blog/posts/organizing-notetaking.html</link>
   <description><![CDATA[ 
 
 
@@ -359,12 +359,12 @@ font-style: inherit;">bash:</span> ./a.out: No such file or directory</span></co
 <li id="fn8"><p>Actually, I just poll the active window every 100 ms to see if it changed.↩︎</p></li>
 </ol>
 </section></div> ]]></description>
-  <guid>https://bitsrc.org/blog/2020/04/16/organizing-notetaking.html</guid>
+  <guid>https://bitsrc.org/blog/posts/organizing-notetaking.html</guid>
   <pubDate>Thu, 16 Apr 2020 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Analysing regexp with Golang</title>
-  <link>https://bitsrc.org/blog/2018/03/01/golang-regexp.html</link>
+  <link>https://bitsrc.org/blog/posts/golang-regexp.html</link>
   <description><![CDATA[ 
 
 
@@ -1884,12 +1884,12 @@ font-style: inherit;">true</span></span></code></pre></div></div>
 
  ]]></description>
   <category>programming</category>
-  <guid>https://bitsrc.org/blog/2018/03/01/golang-regexp.html</guid>
+  <guid>https://bitsrc.org/blog/posts/golang-regexp.html</guid>
   <pubDate>Thu, 01 Mar 2018 08:00:00 GMT</pubDate>
 </item>
 <item>
   <title>More Turing Completeness, or: Somebody is wrong on the Internet</title>
-  <link>https://bitsrc.org/blog/2016/11/23/someone-is-wrong-on-the-internet.html</link>
+  <link>https://bitsrc.org/blog/posts/someone-is-wrong-on-the-internet.html</link>
   <description><![CDATA[ 
 
 
@@ -1925,12 +1925,12 @@ font-style: inherit;">true</span></span></code></pre></div></div>
 
  ]]></description>
   <category>computer-science</category>
-  <guid>https://bitsrc.org/blog/2016/11/23/someone-is-wrong-on-the-internet.html</guid>
+  <guid>https://bitsrc.org/blog/posts/someone-is-wrong-on-the-internet.html</guid>
   <pubDate>Wed, 23 Nov 2016 08:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Fun with Operator Overloading</title>
-  <link>https://bitsrc.org/blog/2016/10/14/operator-overloading.html</link>
+  <link>https://bitsrc.org/blog/posts/operator-overloading.html</link>
   <description><![CDATA[ 
 
 
@@ -2300,12 +2300,12 @@ font-style: inherit;">&gt;</span></span></code></pre></div></div>
 
  ]]></description>
   <category>python</category>
-  <guid>https://bitsrc.org/blog/2016/10/14/operator-overloading.html</guid>
+  <guid>https://bitsrc.org/blog/posts/operator-overloading.html</guid>
   <pubDate>Fri, 14 Oct 2016 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Completeness and decidability</title>
-  <link>https://bitsrc.org/blog/2016/09/25/completeness.html</link>
+  <link>https://bitsrc.org/blog/posts/completeness.html</link>
   <description><![CDATA[ 
 
 
@@ -2321,12 +2321,12 @@ font-style: inherit;">&gt;</span></span></code></pre></div></div>
 
  ]]></description>
   <category>logic</category>
-  <guid>https://bitsrc.org/blog/2016/09/25/completeness.html</guid>
+  <guid>https://bitsrc.org/blog/posts/completeness.html</guid>
   <pubDate>Sun, 25 Sep 2016 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>A Paper a Whatever #15: Keystroke Recognition Using WiFi Signals</title>
-  <link>https://bitsrc.org/blog/2016/09/03/a-paper-a-week-keystroke-recognition-wifi.html</link>
+  <link>https://bitsrc.org/blog/posts/a-paper-a-week-keystroke-recognition-wifi.html</link>
   <description><![CDATA[ 
 
 
@@ -2344,12 +2344,12 @@ font-style: inherit;">&gt;</span></span></code></pre></div></div>
 
  ]]></description>
   <category>apaw</category>
-  <guid>https://bitsrc.org/blog/2016/09/03/a-paper-a-week-keystroke-recognition-wifi.html</guid>
+  <guid>https://bitsrc.org/blog/posts/a-paper-a-week-keystroke-recognition-wifi.html</guid>
   <pubDate>Sat, 03 Sep 2016 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Turing Completeness</title>
-  <link>https://bitsrc.org/blog/2016/08/27/turing-complete.html</link>
+  <link>https://bitsrc.org/blog/posts/turing-complete.html</link>
   <description><![CDATA[ 
 
 
@@ -2365,12 +2365,12 @@ font-style: inherit;">&gt;</span></span></code></pre></div></div>
 
  ]]></description>
   <category>theoretical-cs</category>
-  <guid>https://bitsrc.org/blog/2016/08/27/turing-complete.html</guid>
+  <guid>https://bitsrc.org/blog/posts/turing-complete.html</guid>
   <pubDate>Sat, 27 Aug 2016 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>A Paper a Week-ish #14: GraphLab: A New Framework for Parallel Machine Learning</title>
-  <link>https://bitsrc.org/blog/2016/04/17/a-paper-a-week-graphlab-framework-parallel-machine-learning.html</link>
+  <link>https://bitsrc.org/blog/posts/a-paper-a-week-graphlab-framework-parallel-machine-learning.html</link>
   <description><![CDATA[ 
 
 
@@ -2389,12 +2389,12 @@ font-style: inherit;">&gt;</span></span></code></pre></div></div>
 
  ]]></description>
   <category>apaw</category>
-  <guid>https://bitsrc.org/blog/2016/04/17/a-paper-a-week-graphlab-framework-parallel-machine-learning.html</guid>
+  <guid>https://bitsrc.org/blog/posts/a-paper-a-week-graphlab-framework-parallel-machine-learning.html</guid>
   <pubDate>Sun, 17 Apr 2016 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Using theorem proving to cheat in logic puzzles</title>
-  <link>https://bitsrc.org/blog/2016/04/03/theorem-proving-logic-puzzles.html</link>
+  <link>https://bitsrc.org/blog/posts/theorem-proving-logic-puzzles.html</link>
   <description><![CDATA[ 
 
 
@@ -2592,12 +2592,12 @@ sat</code></pre>
 
  ]]></description>
   <category>logic</category>
-  <guid>https://bitsrc.org/blog/2016/04/03/theorem-proving-logic-puzzles.html</guid>
+  <guid>https://bitsrc.org/blog/posts/theorem-proving-logic-puzzles.html</guid>
   <pubDate>Sun, 03 Apr 2016 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Theorem Proving in Haskell</title>
-  <link>https://bitsrc.org/blog/2015/12/02/theorem-proving-in-haskell.html</link>
+  <link>https://bitsrc.org/blog/posts/theorem-proving-in-haskell.html</link>
   <description><![CDATA[ 
 
 
@@ -2953,12 +2953,12 @@ font-style: inherit;">$</span> iterToNothing steps [s]</span></code></pre></div>
 
  ]]></description>
   <category>programming</category>
-  <guid>https://bitsrc.org/blog/2015/12/02/theorem-proving-in-haskell.html</guid>
+  <guid>https://bitsrc.org/blog/posts/theorem-proving-in-haskell.html</guid>
   <pubDate>Wed, 02 Dec 2015 08:00:00 GMT</pubDate>
 </item>
 <item>
   <title>A Paper a Week-ish #13: Propositions as Types</title>
-  <link>https://bitsrc.org/blog/2015/10/09/a-paper-a-week-propositions-as-types.html</link>
+  <link>https://bitsrc.org/blog/posts/a-paper-a-week-propositions-as-types.html</link>
   <description><![CDATA[ 
 
 
@@ -2984,12 +2984,12 @@ font-style: inherit;">$</span> iterToNothing steps [s]</span></code></pre></div>
 
  ]]></description>
   <category>apaw</category>
-  <guid>https://bitsrc.org/blog/2015/10/09/a-paper-a-week-propositions-as-types.html</guid>
+  <guid>https://bitsrc.org/blog/posts/a-paper-a-week-propositions-as-types.html</guid>
   <pubDate>Fri, 09 Oct 2015 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>A Paper a Week-ish #12: Arithmetical Hierarchy and Complexity of Computation</title>
-  <link>https://bitsrc.org/blog/2015/08/19/a-paper-a-week-arithmetical-hierarchy-and-complexity-of-computation.html</link>
+  <link>https://bitsrc.org/blog/posts/a-paper-a-week-arithmetical-hierarchy-and-complexity-of-computation.html</link>
   <description><![CDATA[ 
 
 
@@ -3012,12 +3012,12 @@ font-style: inherit;">$</span> iterToNothing steps [s]</span></code></pre></div>
 
  ]]></description>
   <category>apaw</category>
-  <guid>https://bitsrc.org/blog/2015/08/19/a-paper-a-week-arithmetical-hierarchy-and-complexity-of-computation.html</guid>
+  <guid>https://bitsrc.org/blog/posts/a-paper-a-week-arithmetical-hierarchy-and-complexity-of-computation.html</guid>
   <pubDate>Wed, 19 Aug 2015 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>A Paper a Week-ish #11: Brewer’s Conjecture and the Feasibility of Consistent, Available, Partition-Tolerant Web Services</title>
-  <link>https://bitsrc.org/blog/2015/07/19/a-paper-a-week-brewers-conjecture.html</link>
+  <link>https://bitsrc.org/blog/posts/a-paper-a-week-brewers-conjecture.html</link>
   <description><![CDATA[ 
 
 
@@ -3035,12 +3035,12 @@ font-style: inherit;">$</span> iterToNothing steps [s]</span></code></pre></div>
 
  ]]></description>
   <category>apaw</category>
-  <guid>https://bitsrc.org/blog/2015/07/19/a-paper-a-week-brewers-conjecture.html</guid>
+  <guid>https://bitsrc.org/blog/posts/a-paper-a-week-brewers-conjecture.html</guid>
   <pubDate>Sun, 19 Jul 2015 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>A Paper a Week-ish #10: In Search of an Understandable Consensus Algorithm</title>
-  <link>https://bitsrc.org/blog/2015/07/06/a-paper-a-week-understandable-consensus.html</link>
+  <link>https://bitsrc.org/blog/posts/a-paper-a-week-understandable-consensus.html</link>
   <description><![CDATA[ 
 
 
@@ -3058,12 +3058,12 @@ font-style: inherit;">$</span> iterToNothing steps [s]</span></code></pre></div>
 
  ]]></description>
   <category>apaw</category>
-  <guid>https://bitsrc.org/blog/2015/07/06/a-paper-a-week-understandable-consensus.html</guid>
+  <guid>https://bitsrc.org/blog/posts/a-paper-a-week-understandable-consensus.html</guid>
   <pubDate>Mon, 06 Jul 2015 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>A Paper a Week-ish #9: Two Simplified Algorithms for Maintaining Order in a List</title>
-  <link>https://bitsrc.org/blog/2015/06/16/a-paper-a-week-algorithms-for-maintaining-order-in-a-list.html</link>
+  <link>https://bitsrc.org/blog/posts/a-paper-a-week-algorithms-for-maintaining-order-in-a-list.html</link>
   <description><![CDATA[ 
 
 
@@ -3080,12 +3080,12 @@ font-style: inherit;">$</span> iterToNothing steps [s]</span></code></pre></div>
 
  ]]></description>
   <category>apaw</category>
-  <guid>https://bitsrc.org/blog/2015/06/16/a-paper-a-week-algorithms-for-maintaining-order-in-a-list.html</guid>
+  <guid>https://bitsrc.org/blog/posts/a-paper-a-week-algorithms-for-maintaining-order-in-a-list.html</guid>
   <pubDate>Tue, 16 Jun 2015 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>A Paper a Week-ish #8: Reflections on Trusting Trust</title>
-  <link>https://bitsrc.org/blog/2015/05/24/a-paper-a-week-reflections-on-trusting-trust.html</link>
+  <link>https://bitsrc.org/blog/posts/a-paper-a-week-reflections-on-trusting-trust.html</link>
   <description><![CDATA[ 
 
 
@@ -3161,12 +3161,12 @@ font-style: inherit;">}</span></span></code></pre></div></div>
 
  ]]></description>
   <category>apaw</category>
-  <guid>https://bitsrc.org/blog/2015/05/24/a-paper-a-week-reflections-on-trusting-trust.html</guid>
+  <guid>https://bitsrc.org/blog/posts/a-paper-a-week-reflections-on-trusting-trust.html</guid>
   <pubDate>Sun, 24 May 2015 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>A Paper a Week-ish #7: The Complexity of Theorem-Proving Procedures</title>
-  <link>https://bitsrc.org/blog/2015/05/07/a-paper-a-week-complexity-of-theorem-proving.html</link>
+  <link>https://bitsrc.org/blog/posts/a-paper-a-week-complexity-of-theorem-proving.html</link>
   <description><![CDATA[ 
 
 
@@ -3183,12 +3183,12 @@ font-style: inherit;">}</span></span></code></pre></div></div>
 
  ]]></description>
   <category>apaw</category>
-  <guid>https://bitsrc.org/blog/2015/05/07/a-paper-a-week-complexity-of-theorem-proving.html</guid>
+  <guid>https://bitsrc.org/blog/posts/a-paper-a-week-complexity-of-theorem-proving.html</guid>
   <pubDate>Thu, 07 May 2015 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>A Paper a Week #6: Differential Privacy</title>
-  <link>https://bitsrc.org/blog/2015/04/12/a-paper-a-week-differential-privacy.html</link>
+  <link>https://bitsrc.org/blog/posts/a-paper-a-week-differential-privacy.html</link>
   <description><![CDATA[ 
 
 
@@ -3206,12 +3206,12 @@ font-style: inherit;">}</span></span></code></pre></div></div>
 
  ]]></description>
   <category>apaw</category>
-  <guid>https://bitsrc.org/blog/2015/04/12/a-paper-a-week-differential-privacy.html</guid>
+  <guid>https://bitsrc.org/blog/posts/a-paper-a-week-differential-privacy.html</guid>
   <pubDate>Sun, 12 Apr 2015 07:00:00 GMT</pubDate>
 </item>
 <item>
   <title>A Paper a Week #5: Temporal Synchronization of multiple Audio Signals</title>
-  <link>https://bitsrc.org/blog/2015/03/31/a-paper-a-week-temporal-audio-synchronization.html</link>
+  <link>https://bitsrc.org/blog/posts/a-paper-a-week-temporal-audio-synchronization.html</link>
   <description><![CDATA[ 
 
 
@@ -3229,7 +3229,7 @@ font-style: inherit;">}</span></span></code></pre></div></div>
 
  ]]></description>
   <category>apaw</category>
-  <guid>https://bitsrc.org/blog/2015/03/31/a-paper-a-week-temporal-audio-synchronization.html</guid>
+  <guid>https://bitsrc.org/blog/posts/a-paper-a-week-temporal-audio-synchronization.html</guid>
   <pubDate>Tue, 31 Mar 2015 07:00:00 GMT</pubDate>
 </item>
 </channel>
