@@ -10,7 +10,32 @@
 <atom:link href="https://bitsrc.org/blog/index.xml" rel="self" type="application/rss+xml"/>
 <description>A blog about computer science, logic and programming. Occasionally other topics reasonably consistent with the rest.</description>
 <generator>quarto-1.8.27</generator>
-<lastBuildDate>Sun, 19 Apr 2020 07:00:00 GMT</lastBuildDate>
+<lastBuildDate>Sun, 19 Apr 2026 07:00:00 GMT</lastBuildDate>
+<item>
+  <title>Compiler Jokes</title>
+  <link>https://bitsrc.org/blog/posts/compiler-jokes.html</link>
+  <description><![CDATA[ 
+
+
+
+
+<p>Where do you put your unwanted objects? The objdump</p>
+<p>What is Marie kondo’s favorite tool? Clang-tidy</p>
+<p>What wizard reduces binary size? The wizard of Oz</p>
+<p>Why didn’t Frodo understand the ring? He doesn’t readelf</p>
+<p>Why did a prison hire a compiler? To do escape analysis</p>
+<p>What does an elf use to move houses? Relocations</p>
+<p>What does the program say when it jumps to an invalid address? Every day we stray further from the light of GOT</p>
+<p>Why does the compiler love origami? It’s constant folding</p>
+<p>What is a compilers favorite sport? Inlining</p>
+
+
+
+ ]]></description>
+  <category>compilers</category>
+  <guid>https://bitsrc.org/blog/posts/compiler-jokes.html</guid>
+  <pubDate>Sun, 19 Apr 2026 07:00:00 GMT</pubDate>
+</item>
 <item>
   <title>Linux: The good, the bad and the ugly</title>
   <link>https://bitsrc.org/blog/posts/linux-the-good-the-bad-and-the-ugly.html</link>
@@ -3208,29 +3233,6 @@ font-style: inherit;">}</span></span></code></pre></div></div>
   <category>apaw</category>
   <guid>https://bitsrc.org/blog/posts/a-paper-a-week-differential-privacy.html</guid>
   <pubDate>Sun, 12 Apr 2015 07:00:00 GMT</pubDate>
-</item>
-<item>
-  <title>A Paper a Week #5: Temporal Synchronization of multiple Audio Signals</title>
-  <link>https://bitsrc.org/blog/posts/a-paper-a-week-temporal-audio-synchronization.html</link>
-  <description><![CDATA[ 
-
-
-
-
-<p>This week’s paper was published by Google and concerns itself with finding methods of combining overlapping audio streams that were recorded from different locations, which is often the case, for instance in concert recordings. It suggests use-cases such as 3D scene reconstruction, which could be done by combining videos that were first synchronized using their audio stream.</p>
-<p>The paper starts by explaining that existing techniques for matching audio streams basically work by finding a locally good match and then trying to expand that match further. This local approach is contrasted by a global one presented here.</p>
-<p>In fact, the paper shows two different implementations of what is roughly the same general idea. The first method proposed is, at least to me, very appealing in its simplicity and elegance. It goes as follows: first, an offset is calculated between every pair of input signals. This can be done in several ways, one of which is maximizing the cross-covariance (think of it as a measure of correlation) of “spectral flatness”, which is described as being “the variation of tonality over time. It is defined by the ratio of the geometric mean and arithmetic mean of the frequency domain coefficients”.</p>
-<p>Then, a complete graph containing each signal as nodes is constructed, and a measure of “how good”&nbsp;the matching between any two signals is (according to some metric) is used as the edge weight between the two. On this, MST (minimum spanning tree) is applied to find a global solution.</p>
-<p>The second method (very roughly) proposes a probabilistic distribution for the offset between two signals, based on the offsets calculated as above. Then, a method called Belief Propagation (which I hope I can cover in greater detail at a later point in this series) is used to calculate the marginals of that distribution. Because this not necessarily converges to a global solution, different base hypothesis have to be tried. I find the notation in this part of the paper a bit confusing and I had to make a few assumptions about what they are trying to say when reading it (so I might be summarizing that incorrectly!).</p>
-<p>Then follows an experimental evaluations that shows both methods perform well.</p>
-<p>Without further ado, here is the paper: <a href="http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/42193.pdf">PDF</a>.</p>
-
-
-
- ]]></description>
-  <category>apaw</category>
-  <guid>https://bitsrc.org/blog/posts/a-paper-a-week-temporal-audio-synchronization.html</guid>
-  <pubDate>Tue, 31 Mar 2015 07:00:00 GMT</pubDate>
 </item>
 </channel>
 </rss>

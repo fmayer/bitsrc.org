@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://bitsrc.org/blog/about.html</loc>
-    <lastmod>2026-03-01T18:54:03.698Z</lastmod>
+    <lastmod>2026-03-03T03:06:53.669Z</lastmod>
   </url>
   <url>
     <loc>https://bitsrc.org/blog/posts/a-paper-a-week-openjdk-sort-broken.html</loc>
@@ -23,6 +23,10 @@
   <url>
     <loc>https://bitsrc.org/blog/posts/a-paper-a-week-understandable-consensus.html</loc>
     <lastmod>2026-02-06T05:36:10.187Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bitsrc.org/blog/posts/compiler-jokes.html</loc>
+    <lastmod>2026-04-19T18:50:07.486Z</lastmod>
   </url>
   <url>
     <loc>https://bitsrc.org/blog/posts/operator-overloading.html</loc>
