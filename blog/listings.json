@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/a-paper-a-decade-validator-for-software-pipelining.html",
       "/posts/compiler-jokes.html",
       "/posts/linux-the-good-the-bad-and-the-ugly.html",
       "/posts/organizing-notetaking.html",

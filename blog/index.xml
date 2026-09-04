@@ -10,7 +10,62 @@
 <atom:link href="https://bitsrc.org/blog/index.xml" rel="self" type="application/rss+xml"/>
 <description>A blog about computer science, logic and programming. Occasionally other topics reasonably consistent with the rest.</description>
 <generator>quarto-1.8.27</generator>
-<lastBuildDate>Sun, 19 Apr 2026 07:00:00 GMT</lastBuildDate>
+<lastBuildDate>Thu, 03 Sep 2026 07:00:00 GMT</lastBuildDate>
+<item>
+  <title>A Paper a Decade #16: A simple, verified validator for software pipelining</title>
+  <link>https://bitsrc.org/blog/posts/a-paper-a-decade-validator-for-software-pipelining.html</link>
+  <description><![CDATA[ 
+
+
+
+
+<p>What a decade since I’ve last posted about a paper I read. I have since gotten to work on compilers, so I’ve read this paper out of more than idle curiosity.</p>
+<p>The paper starts out by explaining what software pipelining / Modulo Scheduling is. One point of definitional confusion is that it appears to actually be presenting the Modulo Variable Expansion<sup>1</sup> algorithm rather than vanilla Modulo Scheduling (which is a special case of MVE).</p>
+<p>Then it defines the problem by introducing fancy variables to say “for every iteration count, the result of the pipelined and the original loop should be the same”:</p>
+<blockquote class="blockquote">
+<ul>
+<li><img src="https://latex.codecogs.com/png.latex?%5Cmathcal%7BS%7D"> is the new loop body […]</li>
+<li><img src="https://latex.codecogs.com/png.latex?%5Cmathcal%7BP%7D"> is the loop prolog […]</li>
+<li><img src="https://latex.codecogs.com/png.latex?%5Cmathcal%7BE%7D"> is the loop epilog […]</li>
+<li><img src="https://latex.codecogs.com/png.latex?%5Cmu"> is the minimum number of iterations that must be performed to be able to use the pipelined loop.</li>
+<li><img src="https://latex.codecogs.com/png.latex?%5Cdelta"> is the amount of unrolling that has been performed […]</li>
+</ul>
+<p>[…]</p>
+<p>Likewise, the generated code behaves either like <img src="https://latex.codecogs.com/png.latex?%5Cmathcal%7BB%7D%5EN"> if <img src="https://latex.codecogs.com/png.latex?N%20%3C%20%5Cmu">, or like</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cmathcal%7BP%7D;%5Cmathcal%7BS%7D%5E%7B%5Ckappa(N)%7D;%5Cmathcal%7BE%7D;%5Cmathcal%7BB%7D%5E%7B%5Crho(N)%7D"></p>
+<p>if <img src="https://latex.codecogs.com/png.latex?N%20%5Cgeq%20%5Cmu">, where</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cbegin%7Baligned%7D%0A%5Ckappa(N)%20&amp;%5Coverset%7B%5Ctext%7Bdef%7D%7D%7B=%7D%20(N%20-%20%5Cmu)/%5Cdelta%20%5C%5C%0A%5Crho(N)%20%20%20&amp;%5Coverset%7B%5Ctext%7Bdef%7D%7D%7B=%7D%20N%20-%20%5Cmu%20-%20%5Cdelta%20%5Ctimes%20%5Ckappa(N)%0A%5Cend%7Baligned%7D%0A"></p>
+<p>The verification problem therefore reduces to establishing that, for all <img src="https://latex.codecogs.com/png.latex?N">, the two basic blocks</p>
+<p><span id="eq-equiv"><img src="https://latex.codecogs.com/png.latex?%0AX_N%20%5Coverset%7B%5Ctext%7Bdef%7D%7D%7B=%7D%20%5Cmathcal%7BB%7D%5EN%0A%5Cqquad%5Ctext%7Band%7D%5Cqquad%0AY_N%20%5Coverset%7B%5Ctext%7Bdef%7D%7D%7B=%7D%20%5Cmathcal%7BP%7D;%5Cmathcal%7BS%7D%5E%7B%5Ckappa(N)%7D;%5Cmathcal%7BE%7D;%5Cmathcal%7BB%7D%5E%7B%5Crho(N)%7D%0A%5Ctag%7B1%7D"></span></p>
+<p>are semantically equivalent.</p>
+</blockquote>
+<p>Here, <img src="https://latex.codecogs.com/png.latex?N"> is the trip count, <img src="https://latex.codecogs.com/png.latex?%5Calpha"> is the result of symbolic execution, and <img src="https://latex.codecogs.com/png.latex?%5Cmathcal%7BB%7D"> is the original, single basic-block loop body.</p>
+<p>Nice. Now if we could just <img src="https://latex.codecogs.com/png.latex?%5Cforall%20N">. But there are countably too many of those to symbolically execute, so let’s read on.</p>
+<blockquote class="blockquote">
+<p>The key discovery of this paper is that this undecidable property <img src="https://latex.codecogs.com/png.latex?%5Cforall%20N,%5C%20%5Calpha(X_N)%20=%20%5Calpha(Y_N)"> is implied by (and, in practice, equivalent to) the following two decidable conditions:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Calpha(%5Cmathcal%7BE%7D;%5Cmathcal%7BB%7D%5E%7B%5Cdelta%7D)%20=%20%5Calpha(%5Cmathcal%7BS%7D;%5Cmathcal%7BE%7D)"></p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Calpha(%5Cmathcal%7BB%7D%5E%7B%5Cmu%7D)%20=%20%5Calpha(%5Cmathcal%7BP%7D;%5Cmathcal%7BE%7D)"></p>
+</blockquote>
+<p>In essence: exiting the pipelined loop and running the original loop body (<img src="https://latex.codecogs.com/png.latex?%5Cdelta"> times if it was unrolled) should be the same as continuing it and exiting. You throw in some conditions about the induction variable and the loop bound, and you have the algorithm in section 5.</p>
+<p>That is the core insight of the paper. The rest of it concerns itself with their symbolic execution method, the proof, and some caveats about the approach.</p>
+<p>The interesting one is that passing the validation condition is sufficient but not necessary for the transformation being correct (i.e.&nbsp;being equivalent to Equation&nbsp;1). Without making assumptions about the transformation, that is somewhat trivial, because it could encode all sorts of unsolved problems in the verification, like adding <code>Collatz(i) == 1</code> to the loop condition, so our validation has no chance of ever succeeding. The paper says they “strongly believe it holds in practice as long as the software pipelining algorithm used is purely syntactic”. Which is a somewhat unsatisfactory thing to say in a theoretical CS paper, but it sounds reasonable.</p>
+<p>They implemented a software pipeliner and this validator for CompCert, and have not found it to reject correct transformations, which gives this claim a bit of empirical weight.</p>
+<p>The rest of the caveats are pretty much classic caveats to any symbolic execution technique.</p>
+<p>Read the <a href="https://jtristan.github.io/papers/popl10.pdf">paper here</a>.</p>
+
+
+
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p><a href="https://www.cs.cmu.edu/afs/cs/academic/class/15745-s13/public/lectures/L19-Software-Pipelining-1up.pdf">slide 20</a>↩︎</p></li>
+</ol>
+</section></div> ]]></description>
+  <category>apaw</category>
+  <guid>https://bitsrc.org/blog/posts/a-paper-a-decade-validator-for-software-pipelining.html</guid>
+  <pubDate>Thu, 03 Sep 2026 07:00:00 GMT</pubDate>
+</item>
 <item>
   <title>Compiler Jokes</title>
   <link>https://bitsrc.org/blog/posts/compiler-jokes.html</link>
@@ -3210,29 +3265,6 @@ font-style: inherit;">}</span></span></code></pre></div></div>
   <category>apaw</category>
   <guid>https://bitsrc.org/blog/posts/a-paper-a-week-complexity-of-theorem-proving.html</guid>
   <pubDate>Thu, 07 May 2015 07:00:00 GMT</pubDate>
-</item>
-<item>
-  <title>A Paper a Week #6: Differential Privacy</title>
-  <link>https://bitsrc.org/blog/posts/a-paper-a-week-differential-privacy.html</link>
-  <description><![CDATA[ 
-
-
-
-
-<p>First, I will, for the coming few weeks, reduce the frequency of these posts to one a fortnight – for one, fortnight is an amazing word, and also I am rather busy with moving (and working), so I will resume to the usual frequency after I have settled a bit.</p>
-<p>With this out of the way, now on to talking about papers! This week’s paper was published by Cynthia Dwork (the co-inventor of differential privacy) of MS Research and is about differential privacy.</p>
-<p>What is that, you ask? Differential privacy is a measure introduced to reason about privacy leaks (affecting individuals) caused by statistical databases. Differential privacy aims to make certain guarantees of protecting individuals’ privacy even in the presence of auxiliary information to an attacker. This concept is introduced in the paper by an example (which is an excellent thing to do in a paper if you want people to actually understand what you are talking about): imagine an attacker knows a person is 2 inches smaller than the average citizen of Uruguay, then a query giving the average height of a citizen of Uruguay, in combination with this auxiliary knowledge, reveals (more or less) personal information about the person.</p>
-<p>This also nicely illustrates that it is impossible to design a database that, combined with arbitrary auxiliary information, never reveals any personal information. Thus, the aim of this paper is more modest: to design databases where participating in the database does not significantly increase the chance that personal information is revealed.</p>
-<p>Essentially, this is achieved by fuzzing the output enough so that it does not differ for any two database configurations only differing in one entry. I will skip the details and refer to the paper, which presents them in a quite understandable fashion (assuming you are concentrating while reading it).</p>
-<p>And yes, the paper stops as randomly and abrupt as this blog post.</p>
-<p>Find the paper here: <a href="http://www.msr-waypoint.com/pubs/64346/dwork.pdf">PDF</a>.</p>
-
-
-
- ]]></description>
-  <category>apaw</category>
-  <guid>https://bitsrc.org/blog/posts/a-paper-a-week-differential-privacy.html</guid>
-  <pubDate>Sun, 12 Apr 2015 07:00:00 GMT</pubDate>
 </item>
 </channel>
 </rss>
